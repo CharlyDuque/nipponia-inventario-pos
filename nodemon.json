@@ -1,0 +1,15 @@
+{
+  "watch": [
+    "server.js",
+    "src"
+  ],
+  "ext": "js,json",
+  "ignore": [
+    ".git",
+    "node_modules",
+    "backups",
+    "docker",
+    "frontend"
+  ],
+  "exec": "node server.js"
+}
