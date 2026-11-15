@@ -1,0 +1,58 @@
+:root {
+  /* Colores provisionales de Nipponia */
+  --color-primary: #7c2d4c;
+  --color-primary-hover: #64223d;
+  --color-primary-soft: #f5e8ed;
+
+  --color-secondary: #245f73;
+  --color-secondary-hover: #194858;
+
+  --color-success: #15803d;
+  --color-warning: #b45309;
+  --color-danger: #b42318;
+
+  --color-background: #f8f5f2;
+  --color-surface: #ffffff;
+  --color-surface-muted: #f1ece8;
+
+  --color-text: #271c20;
+  --color-text-muted: #6f6065;
+  --color-border: #ded5d8;
+
+  /* Espaciado */
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-5: 1.5rem;
+  --space-6: 2rem;
+  --space-7: 3rem;
+
+  /* Bordes */
+  --radius-sm: 0.375rem;
+  --radius-md: 0.625rem;
+  --radius-lg: 1rem;
+  --radius-pill: 999px;
+
+  /* Sombras */
+  --shadow-sm: 0 2px 8px rgb(39 28 32 / 8%);
+  --shadow-md: 0 8px 24px rgb(39 28 32 / 12%);
+
+  /* Tipografía */
+  --font-body:
+    Inter,
+    system-ui,
+    -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
+    sans-serif;
+
+  --font-size-sm: 0.875rem;
+  --font-size-base: 1rem;
+  --font-size-lg: 1.125rem;
+  --font-size-xl: 1.5rem;
+  --font-size-2xl: 2rem;
+
+  /* Transiciones */
+  --transition-fast: 150ms ease;
+}
