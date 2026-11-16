@@ -1,57 +1,72 @@
 import {
+  useCallback,
   useEffect,
   useState,
 } from "react";
 
 import Button from "../components/Button/Button";
-import ProductoCard from
-  "../components/productos/ProductoCard";
+import Modal from "../components/Modal/Modal";
+import ProductoCard from "../components/productos/ProductoCard";
+import ProductoForm from "../components/productos/ProductoForm";
 
 import {
+  actualizarProducto,
+  crearProducto,
   obtenerProductos,
 } from "../services/productosApi";
 
 import styles from "./ProductosPage.module.css";
 
 function ProductosPage() {
-  const [
-    productos,
-    setProductos,
-  ] = useState([]);
+  const [productos, setProductos] =
+    useState([]);
+
+  const [cargando, setCargando] =
+    useState(true);
+
+  const [error, setError] =
+    useState("");
 
   const [
-    cargando,
-    setCargando,
-  ] = useState(true);
+    formularioAbierto,
+    setFormularioAbierto,
+  ] = useState(false);
 
   const [
-    error,
-    setError,
-  ] = useState("");
+    productoSeleccionado,
+    setProductoSeleccionado,
+  ] = useState(null);
 
-  async function cargarProductos(signal) {
-    try {
-      setCargando(true);
-      setError("");
+  const cargarProductos = useCallback(
+    async (signal) => {
+      try {
+        setCargando(true);
+        setError("");
 
-      const datos =
-        await obtenerProductos({
-          signal,
-        });
+        const datos =
+          await obtenerProductos({
+            signal,
+          });
 
-      setProductos(datos);
-    } catch (errorPeticion) {
-      if (
-        errorPeticion.name !== "AbortError"
-      ) {
-        setError(errorPeticion.message);
+        setProductos(datos);
+      } catch (errorPeticion) {
+        if (
+          errorPeticion.name !==
+          "AbortError"
+        ) {
+          setError(
+            errorPeticion.message ||
+              "No fue posible obtener los productos"
+          );
+        }
+      } finally {
+        if (!signal?.aborted) {
+          setCargando(false);
+        }
       }
-    } finally {
-      if (!signal?.aborted) {
-        setCargando(false);
-      }
-    }
-  }
+    },
+    []
+  );
 
   useEffect(() => {
     const controller =
@@ -64,12 +79,36 @@ function ProductosPage() {
     return () => {
       controller.abort();
     };
-  }, []);
+  }, [cargarProductos]);
 
-  function manejarEdicion(producto) {
-    window.alert(
-      `Próximamente editaremos: ${producto.nombre}`
-    );
+  function abrirCreacion() {
+    setProductoSeleccionado(null);
+    setFormularioAbierto(true);
+  }
+
+  function abrirEdicion(producto) {
+    setProductoSeleccionado(producto);
+    setFormularioAbierto(true);
+  }
+
+  function cerrarFormulario() {
+    setFormularioAbierto(false);
+    setProductoSeleccionado(null);
+  }
+
+  async function guardarProducto(datos) {
+    if (productoSeleccionado) {
+      await actualizarProducto(
+        productoSeleccionado._id,
+        datos
+      );
+    } else {
+      await crearProducto(datos);
+    }
+
+    cerrarFormulario();
+
+    await cargarProductos();
   }
 
   return (
@@ -92,11 +131,7 @@ function ProductosPage() {
         <Button
           variant="primary"
           size="large"
-          onClick={() =>
-            window.alert(
-              "Próximamente: crear producto"
-            )
-          }
+          onClick={abrirCreacion}
         >
           Nuevo producto
         </Button>
@@ -149,7 +184,7 @@ function ProductosPage() {
                     key={producto._id}
                     producto={producto}
                     onEditar={
-                      manejarEdicion
+                      abrirEdicion
                     }
                   />
                 )
@@ -157,6 +192,24 @@ function ProductosPage() {
             </section>
           </>
         )}
+
+      <Modal
+        open={formularioAbierto}
+        title={
+          productoSeleccionado
+            ? "Editar producto"
+            : "Nuevo producto"
+        }
+        onClose={cerrarFormulario}
+      >
+        <ProductoForm
+          producto={
+            productoSeleccionado
+          }
+          onSubmit={guardarProducto}
+          onCancel={cerrarFormulario}
+        />
+      </Modal>
     </main>
   );
 }

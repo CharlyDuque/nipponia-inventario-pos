@@ -28,14 +28,6 @@
   object-fit: cover;
 }
 
-.placeholder {
-  display: grid;
-  height: 100%;
-  place-items: center;
-
-  color: var(--color-text-muted);
-  font-size: var(--font-size-sm);
-}
 
 .content {
   display: grid;
@@ -90,4 +82,21 @@
 .outOfStock {
   color: var(--color-danger);
   font-weight: 700;
+}
+
+.placeholder {
+  display: grid;
+  height: 100%;
+  place-content: center;
+  justify-items: center;
+  gap: var(--space-sm);
+
+  color: var(--color-text-muted);
+  font-size: var(--font-caption);
+}
+
+.placeholderIcon {
+  color: var(--color-primary);
+  font-size: 2rem;
+  line-height: 1;
 }

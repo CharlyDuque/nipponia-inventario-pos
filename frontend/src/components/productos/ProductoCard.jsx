@@ -1,31 +1,66 @@
+import {
+  useEffect,
+  useState,
+} from "react";
+
 import Button from "../Button/Button";
+
 import styles from "./ProductoCard.module.css";
 
 function ProductoCard({
   producto,
   onEditar,
 }) {
-  const disponible = producto.stock > 0;
+  const [imageError, setImageError] =
+    useState(false);
+
+  useEffect(() => {
+    setImageError(false);
+  }, [producto.imagen]);
+
+  const disponible =
+    producto.stock > 0;
+
+  const mostrarImagen =
+    producto.imagen &&
+    !imageError;
+
+  const precio =
+    Number(producto.precio) || 0;
 
   return (
     <article className={styles.card}>
       <div className={styles.imageContainer}>
-        {producto.imagen ? (
+        {mostrarImagen ? (
           <img
             src={producto.imagen}
             alt={producto.nombre}
             className={styles.image}
+            onError={() =>
+              setImageError(true)
+            }
           />
         ) : (
-          <div className={styles.placeholder}>
-            Sin imagen
+          <div
+            className={styles.placeholder}
+            aria-label={`${producto.nombre} sin imagen disponible`}
+          >
+            <span
+              className={styles.placeholderIcon}
+              aria-hidden="true"
+            >
+              ◫
+            </span>
+
+            <span>Sin imagen</span>
           </div>
         )}
       </div>
 
       <div className={styles.content}>
         <span className={styles.category}>
-          {producto.categoria || "Sin categoría"}
+          {producto.categoria ||
+            "Sin categoría"}
         </span>
 
         <h2 className={styles.title}>
@@ -33,7 +68,9 @@ function ProductoCard({
         </h2>
 
         <p className={styles.code}>
-          Código: {producto.codigo || "Sin código"}
+          Código:{" "}
+          {producto.codigo ||
+            "Sin código"}
         </p>
 
         {producto.descripcion && (
@@ -43,8 +80,10 @@ function ProductoCard({
         )}
 
         <div className={styles.summary}>
-          <strong className={styles.price}>
-            ${producto.precio.toFixed(2)}
+          <strong
+            className={`${styles.price} tabular`}
+          >
+            ${precio.toFixed(2)}
           </strong>
 
           <span
@@ -63,7 +102,9 @@ function ProductoCard({
         <Button
           variant="outline"
           fullWidth
-          onClick={() => onEditar?.(producto)}
+          onClick={() =>
+            onEditar?.(producto)
+          }
         >
           Editar producto
         </Button>

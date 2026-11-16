@@ -34,3 +34,45 @@ export async function obtenerProductos({
 
   return procesarRespuesta(respuesta);
 }
+export async function crearProducto(
+  producto
+) {
+  const respuesta = await fetch(
+    PRODUCTOS_URL,
+    {
+      method: "POST",
+
+      headers: {
+        "Content-Type":
+          "application/json",
+        Accept: "application/json",
+      },
+
+      body: JSON.stringify(producto),
+    }
+  );
+
+  return procesarRespuesta(respuesta);
+}
+
+export async function actualizarProducto(
+  id,
+  producto
+) {
+  const respuesta = await fetch(
+    `${PRODUCTOS_URL}/${id}`,
+    {
+      method: "PUT",
+
+      headers: {
+        "Content-Type":
+          "application/json",
+        Accept: "application/json",
+      },
+
+      body: JSON.stringify(producto),
+    }
+  );
+
+  return procesarRespuesta(respuesta);
+}
