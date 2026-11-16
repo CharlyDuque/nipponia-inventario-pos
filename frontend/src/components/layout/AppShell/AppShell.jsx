@@ -1,28 +1,23 @@
-import Sidebar from "../Sidebar/Sidebar";
-import BottomNav from "../BottomNav/BottomNav";
+import BottomNav from
+  "../BottomNav/BottomNav";
+
+import Sidebar from
+  "../Sidebar/Sidebar";
 
 import styles from "./AppShell.module.css";
 
 function AppShell({
   children,
-  currentView = "inventario",
-  onNavigate,
 }) {
   return (
     <div className={styles.shell}>
-      <Sidebar
-        currentView={currentView}
-        onNavigate={onNavigate}
-      />
+      <Sidebar />
 
       <div className={styles.content}>
         {children}
       </div>
 
-      <BottomNav
-        currentView={currentView}
-        onNavigate={onNavigate}
-      />
+      <BottomNav />
     </div>
   );
 }

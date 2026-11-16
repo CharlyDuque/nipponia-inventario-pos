@@ -1,0 +1,20 @@
+.layout {
+  min-height: 100vh;
+  background: var(--color-bg-canvas);
+}
+
+.content {
+  min-height: calc(100vh - 68px);
+
+  padding-bottom:
+    calc(
+      var(--bottom-nav-height-mobile) +
+      var(--space-lg)
+    );
+}
+
+@media (min-width: 768px) {
+  .content {
+    padding-bottom: 0;
+  }
+}

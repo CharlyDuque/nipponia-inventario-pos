@@ -1,3 +1,5 @@
+import { NavLink } from "react-router";
+
 import styles from "./Sidebar.module.css";
 
 const items = [
@@ -5,33 +7,35 @@ const items = [
     id: "inventario",
     icon: "📦",
     label: "Inventario",
+    to: "/operador/inventario",
   },
   {
     id: "catalogo",
     icon: "📚",
     label: "Catálogo",
+    to: "/cliente/catalogo",
   },
   {
     id: "caja",
     icon: "🧾",
     label: "Caja",
+    to: "/operador/caja",
   },
   {
     id: "ventas",
     icon: "💳",
     label: "Ventas",
+    to: "/operador/ventas",
   },
   {
     id: "corte",
     icon: "📊",
     label: "Corte",
+    to: "/operador/corte",
   },
 ];
 
-function Sidebar({
-  currentView,
-  onNavigate,
-}) {
+function Sidebar() {
   return (
     <aside className={styles.sidebar}>
       <div className={styles.brand}>
@@ -48,38 +52,30 @@ function Sidebar({
         className={styles.navigation}
         aria-label="Navegación del operador"
       >
-        {items.map((item) => {
-          const active =
-            currentView === item.id;
-
-          return (
-            <button
-              key={item.id}
-              type="button"
-              className={`${styles.item} ${
-                active ? styles.active : ""
-              }`}
-              aria-current={
-                active ? "page" : undefined
-              }
-              aria-label={item.label}
-              onClick={() =>
-                onNavigate?.(item.id)
-              }
+        {items.map((item) => (
+          <NavLink
+            key={item.id}
+            to={item.to}
+            className={({ isActive }) =>
+              `${styles.item} ${
+                isActive
+                  ? styles.active
+                  : ""
+              }`
+            }
+          >
+            <span
+              className={styles.icon}
+              aria-hidden="true"
             >
-              <span
-                className={styles.icon}
-                aria-hidden="true"
-              >
-                {item.icon}
-              </span>
+              {item.icon}
+            </span>
 
-              <span className={styles.label}>
-                {item.label}
-              </span>
-            </button>
-          );
-        })}
+            <span className={styles.label}>
+              {item.label}
+            </span>
+          </NavLink>
+        ))}
       </nav>
 
       <div className={styles.serverStatus}>

@@ -1,3 +1,5 @@
+import { NavLink } from "react-router";
+
 import styles from "./BottomNav.module.css";
 
 const items = [
@@ -5,62 +7,56 @@ const items = [
     id: "inventario",
     icon: "📦",
     label: "Inventario",
+    to: "/operador/inventario",
   },
   {
     id: "catalogo",
     icon: "📚",
     label: "Catálogo",
+    to: "/cliente/catalogo",
   },
   {
     id: "caja",
     icon: "🧾",
     label: "Caja",
+    to: "/operador/caja",
   },
   {
     id: "corte",
     icon: "📊",
     label: "Corte",
+    to: "/operador/corte",
   },
 ];
 
-function BottomNav({
-  currentView,
-  onNavigate,
-}) {
+function BottomNav() {
   return (
     <nav
       className={styles.nav}
       aria-label="Navegación móvil"
     >
-      {items.map((item) => {
-        const active =
-          currentView === item.id;
-
-        return (
-          <button
-            key={item.id}
-            type="button"
-            className={`${styles.item} ${
-              active ? styles.active : ""
-            }`}
-            aria-current={
-              active ? "page" : undefined
-            }
-            onClick={() =>
-              onNavigate?.(item.id)
-            }
+      {items.map((item) => (
+        <NavLink
+          key={item.id}
+          to={item.to}
+          className={({ isActive }) =>
+            `${styles.item} ${
+              isActive
+                ? styles.active
+                : ""
+            }`
+          }
+        >
+          <span
+            className={styles.icon}
+            aria-hidden="true"
           >
-            <span
-              className={styles.icon}
-              aria-hidden="true"
-            >
-              {item.icon}
-            </span>
+            {item.icon}
+          </span>
 
-            <span>{item.label}</span>
-          </button>
-        );
-      })}
+          <span>{item.label}</span>
+        </NavLink>
+      ))}
     </nav>
   );
 }

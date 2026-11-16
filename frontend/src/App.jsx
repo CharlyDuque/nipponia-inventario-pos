@@ -1,41 +1,114 @@
-import { useState } from "react";
+import {
+  Navigate,
+  Route,
+  Routes,
+} from "react-router";
 
-import AppShell from
-  "./components/layout/AppShell/AppShell";
+import ClienteLayout from
+  "./layouts/ClienteLayout";
+
+import OperadorLayout from
+  "./layouts/OperadorLayout";
+
+import CajaPage from
+  "./pages/CajaPage";
+
+import CarritoPage from
+  "./pages/CarritoPage";
+
+import CatalogoPage from
+  "./pages/CatalogoPage";
+
+import CortePage from
+  "./pages/CortePage";
+
+import NotFoundPage from
+  "./pages/NotFoundPage";
 
 import ProductosPage from
   "./pages/ProductosPage";
 
+import VentasPage from
+  "./pages/VentasPage";
+
 function App() {
-  const [
-    currentView,
-    setCurrentView,
-  ] = useState("inventario");
-
   return (
-    <AppShell
-      currentView={currentView}
-      onNavigate={setCurrentView}
-    >
-      {currentView === "inventario" ? (
-        <ProductosPage />
-      ) : (
-        <main
-          style={{
-            padding: "2rem",
-          }}
-        >
-          <h1>
-            {currentView}
-          </h1>
+    <Routes>
+      <Route
+        path="/"
+        element={
+          <Navigate
+            to="/operador/inventario"
+            replace
+          />
+        }
+      />
 
-          <p>
-            Esta sección se construirá como
-            una página independiente.
-          </p>
-        </main>
-      )}
-    </AppShell>
+      <Route
+        path="/operador"
+        element={<OperadorLayout />}
+      >
+        <Route
+          index
+          element={
+            <Navigate
+              to="inventario"
+              replace
+            />
+          }
+        />
+
+        <Route
+          path="inventario"
+          element={<ProductosPage />}
+        />
+
+        <Route
+          path="caja"
+          element={<CajaPage />}
+        />
+
+        <Route
+          path="ventas"
+          element={<VentasPage />}
+        />
+
+        <Route
+          path="corte"
+          element={<CortePage />}
+        />
+      </Route>
+
+      <Route
+        path="/cliente"
+        element={<ClienteLayout />}
+      >
+        <Route
+          index
+          element={
+            <Navigate
+              to="catalogo"
+              replace
+            />
+          }
+        />
+
+        <Route
+          path="catalogo"
+          element={<CatalogoPage />}
+        />
+
+        <Route
+          path="carrito"
+          element={<CarritoPage />}
+        />
+      </Route>
+
+      <Route
+        path="*"
+        element={<NotFoundPage />}
+      />
+    </Routes>
   );
 }
 
