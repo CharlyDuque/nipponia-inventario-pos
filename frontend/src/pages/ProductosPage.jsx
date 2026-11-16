@@ -6,6 +6,7 @@ import {
 
 import Button from "../components/Button/Button";
 import Modal from "../components/Modal/Modal";
+import Toast from "../components/Toast/Toast";
 import ProductoCard from "../components/productos/ProductoCard";
 import ProductoForm from "../components/productos/ProductoForm";
 
@@ -18,14 +19,9 @@ import {
 import styles from "./ProductosPage.module.css";
 
 function ProductosPage() {
-  const [productos, setProductos] =
-    useState([]);
-
-  const [cargando, setCargando] =
-    useState(true);
-
-  const [error, setError] =
-    useState("");
+  const [productos, setProductos] = useState([]);
+  const [cargando, setCargando] = useState(true);
+  const [error, setError] = useState("");
 
   const [
     formularioAbierto,
@@ -37,22 +33,26 @@ function ProductosPage() {
     setProductoSeleccionado,
   ] = useState(null);
 
+  const [toast, setToast] = useState({
+    open: false,
+    message: "",
+    type: "success",
+  });
+
   const cargarProductos = useCallback(
     async (signal) => {
       try {
         setCargando(true);
         setError("");
 
-        const datos =
-          await obtenerProductos({
-            signal,
-          });
+        const datos = await obtenerProductos({
+          signal,
+        });
 
         setProductos(datos);
       } catch (errorPeticion) {
         if (
-          errorPeticion.name !==
-          "AbortError"
+          errorPeticion.name !== "AbortError"
         ) {
           setError(
             errorPeticion.message ||
@@ -72,9 +72,7 @@ function ProductosPage() {
     const controller =
       new AbortController();
 
-    cargarProductos(
-      controller.signal
-    );
+    cargarProductos(controller.signal);
 
     return () => {
       controller.abort();
@@ -96,8 +94,19 @@ function ProductosPage() {
     setProductoSeleccionado(null);
   }
 
+  function cerrarToast() {
+    setToast({
+      open: false,
+      message: "",
+      type: "success",
+    });
+  }
+
   async function guardarProducto(datos) {
-    if (productoSeleccionado) {
+    const editando =
+      Boolean(productoSeleccionado);
+
+    if (editando) {
       await actualizarProducto(
         productoSeleccionado._id,
         datos
@@ -107,8 +116,15 @@ function ProductosPage() {
     }
 
     cerrarFormulario();
-
     await cargarProductos();
+
+    setToast({
+      open: true,
+      message: editando
+        ? "Producto actualizado correctamente"
+        : "Producto creado correctamente",
+      type: "success",
+    });
   }
 
   return (
@@ -173,22 +189,17 @@ function ProductosPage() {
         productos.length > 0 && (
           <>
             <p className={styles.counter}>
-              {productos.length} productos
-              activos
+              {productos.length} productos activos
             </p>
 
             <section className={styles.grid}>
-              {productos.map(
-                (producto) => (
-                  <ProductoCard
-                    key={producto._id}
-                    producto={producto}
-                    onEditar={
-                      abrirEdicion
-                    }
-                  />
-                )
-              )}
+              {productos.map((producto) => (
+                <ProductoCard
+                  key={producto._id}
+                  producto={producto}
+                  onEditar={abrirEdicion}
+                />
+              ))}
             </section>
           </>
         )}
@@ -203,13 +214,18 @@ function ProductosPage() {
         onClose={cerrarFormulario}
       >
         <ProductoForm
-          producto={
-            productoSeleccionado
-          }
+          producto={productoSeleccionado}
           onSubmit={guardarProducto}
           onCancel={cerrarFormulario}
         />
       </Modal>
+
+      <Toast
+        open={toast.open}
+        message={toast.message}
+        type={toast.type}
+        onClose={cerrarToast}
+      />
     </main>
   );
 }
