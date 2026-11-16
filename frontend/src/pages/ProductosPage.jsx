@@ -1,10 +1,12 @@
 import {
   useCallback,
   useEffect,
+  useMemo,
   useState,
 } from "react";
 
 import Button from "../components/Button/Button";
+import ConfirmDialog from "../components/ConfirmDialog/ConfirmDialog";
 import Modal from "../components/Modal/Modal";
 import Toast from "../components/Toast/Toast";
 import ProductoCard from "../components/productos/ProductoCard";
@@ -13,15 +15,25 @@ import ProductoForm from "../components/productos/ProductoForm";
 import {
   actualizarProducto,
   crearProducto,
-  obtenerProductos,
+  darDeBajaProducto,
+  obtenerTodosLosProductos,
+  reactivarProducto,
 } from "../services/productosApi";
 
 import styles from "./ProductosPage.module.css";
 
 function ProductosPage() {
-  const [productos, setProductos] = useState([]);
-  const [cargando, setCargando] = useState(true);
-  const [error, setError] = useState("");
+  const [productos, setProductos] =
+    useState([]);
+
+  const [cargando, setCargando] =
+    useState(true);
+
+  const [error, setError] =
+    useState("");
+
+  const [filtro, setFiltro] =
+    useState("activos");
 
   const [
     formularioAbierto,
@@ -32,6 +44,19 @@ function ProductosPage() {
     productoSeleccionado,
     setProductoSeleccionado,
   ] = useState(null);
+
+  const [
+    productoParaBaja,
+    setProductoParaBaja,
+  ] = useState(null);
+
+  const [
+    productoParaReactivar,
+    setProductoParaReactivar,
+  ] = useState(null);
+
+  const [procesando, setProcesando] =
+    useState(false);
 
   const [toast, setToast] = useState({
     open: false,
@@ -45,14 +70,16 @@ function ProductosPage() {
         setCargando(true);
         setError("");
 
-        const datos = await obtenerProductos({
-          signal,
-        });
+        const datos =
+          await obtenerTodosLosProductos({
+            signal,
+          });
 
         setProductos(datos);
       } catch (errorPeticion) {
         if (
-          errorPeticion.name !== "AbortError"
+          errorPeticion.name !==
+          "AbortError"
         ) {
           setError(
             errorPeticion.message ||
@@ -72,12 +99,66 @@ function ProductosPage() {
     const controller =
       new AbortController();
 
-    cargarProductos(controller.signal);
+    cargarProductos(
+      controller.signal
+    );
 
     return () => {
       controller.abort();
     };
   }, [cargarProductos]);
+
+  const productosFiltrados = useMemo(
+    () =>
+      productos.filter((producto) => {
+        const activo =
+          producto.activo !== false;
+
+        if (filtro === "inactivos") {
+          return !activo;
+        }
+
+        return activo;
+      }),
+    [productos, filtro]
+  );
+
+  const cantidadActivos = useMemo(
+    () =>
+      productos.filter(
+        (producto) =>
+          producto.activo !== false
+      ).length,
+    [productos]
+  );
+
+  const cantidadInactivos = useMemo(
+    () =>
+      productos.filter(
+        (producto) =>
+          producto.activo === false
+      ).length,
+    [productos]
+  );
+
+  function mostrarToast(
+    message,
+    type = "success"
+  ) {
+    setToast({
+      open: true,
+      message,
+      type,
+    });
+  }
+
+  function cerrarToast() {
+    setToast({
+      open: false,
+      message: "",
+      type: "success",
+    });
+  }
 
   function abrirCreacion() {
     setProductoSeleccionado(null);
@@ -92,14 +173,6 @@ function ProductosPage() {
   function cerrarFormulario() {
     setFormularioAbierto(false);
     setProductoSeleccionado(null);
-  }
-
-  function cerrarToast() {
-    setToast({
-      open: false,
-      message: "",
-      type: "success",
-    });
   }
 
   async function guardarProducto(datos) {
@@ -118,13 +191,69 @@ function ProductosPage() {
     cerrarFormulario();
     await cargarProductos();
 
-    setToast({
-      open: true,
-      message: editando
+    mostrarToast(
+      editando
         ? "Producto actualizado correctamente"
-        : "Producto creado correctamente",
-      type: "success",
-    });
+        : "Producto creado correctamente"
+    );
+  }
+
+  async function confirmarBaja() {
+    if (!productoParaBaja) {
+      return;
+    }
+
+    try {
+      setProcesando(true);
+
+      await darDeBajaProducto(
+        productoParaBaja._id
+      );
+
+      setProductoParaBaja(null);
+      await cargarProductos();
+
+      mostrarToast(
+        "Producto dado de baja correctamente"
+      );
+    } catch (requestError) {
+      mostrarToast(
+        requestError.message ||
+          "No fue posible dar de baja el producto",
+        "error"
+      );
+    } finally {
+      setProcesando(false);
+    }
+  }
+
+  async function confirmarReactivacion() {
+    if (!productoParaReactivar) {
+      return;
+    }
+
+    try {
+      setProcesando(true);
+
+      await reactivarProducto(
+        productoParaReactivar._id
+      );
+
+      setProductoParaReactivar(null);
+      await cargarProductos();
+
+      mostrarToast(
+        "Producto reactivado correctamente"
+      );
+    } catch (requestError) {
+      mostrarToast(
+        requestError.message ||
+          "No fue posible reactivar el producto",
+        "error"
+      );
+    } finally {
+      setProcesando(false);
+    }
   }
 
   return (
@@ -140,7 +269,7 @@ function ProductosPage() {
           </h1>
 
           <p className={styles.subtitle}>
-            Inventario activo de Nipponia
+            Inventario de Nipponia
           </p>
         </div>
 
@@ -152,6 +281,41 @@ function ProductosPage() {
           Nuevo producto
         </Button>
       </header>
+
+      <section
+        className={styles.filters}
+        aria-label="Filtrar productos"
+      >
+        <button
+          type="button"
+          className={`${styles.filterButton} ${
+            filtro === "activos"
+              ? styles.filterActive
+              : ""
+          }`}
+          onClick={() =>
+            setFiltro("activos")
+          }
+        >
+          Activos
+          <span>{cantidadActivos}</span>
+        </button>
+
+        <button
+          type="button"
+          className={`${styles.filterButton} ${
+            filtro === "inactivos"
+              ? styles.filterActive
+              : ""
+          }`}
+          onClick={() =>
+            setFiltro("inactivos")
+          }
+        >
+          Inactivos
+          <span>{cantidadInactivos}</span>
+        </button>
+      </section>
 
       {cargando && (
         <section className={styles.message}>
@@ -178,28 +342,41 @@ function ProductosPage() {
 
       {!cargando &&
         !error &&
-        productos.length === 0 && (
+        productosFiltrados.length === 0 && (
           <section className={styles.message}>
-            No hay productos activos.
+            No hay productos{" "}
+            {filtro === "activos"
+              ? "activos"
+              : "inactivos"}
+            .
           </section>
         )}
 
       {!cargando &&
         !error &&
-        productos.length > 0 && (
+        productosFiltrados.length > 0 && (
           <>
             <p className={styles.counter}>
-              {productos.length} productos activos
+              {productosFiltrados.length}{" "}
+              productos {filtro}
             </p>
 
             <section className={styles.grid}>
-              {productos.map((producto) => (
-                <ProductoCard
-                  key={producto._id}
-                  producto={producto}
-                  onEditar={abrirEdicion}
-                />
-              ))}
+              {productosFiltrados.map(
+                (producto) => (
+                  <ProductoCard
+                    key={producto._id}
+                    producto={producto}
+                    onEditar={abrirEdicion}
+                    onDarDeBaja={
+                      setProductoParaBaja
+                    }
+                    onReactivar={
+                      setProductoParaReactivar
+                    }
+                  />
+                )
+              )}
             </section>
           </>
         )}
@@ -219,6 +396,44 @@ function ProductosPage() {
           onCancel={cerrarFormulario}
         />
       </Modal>
+
+      <ConfirmDialog
+        open={Boolean(productoParaBaja)}
+        title="Dar de baja producto"
+        message={
+          productoParaBaja
+            ? `¿Deseas dar de baja “${productoParaBaja.nombre}”? El producto desaparecerá del inventario activo, pero conservará su historial.`
+            : ""
+        }
+        confirmText="Dar de baja"
+        variant="danger"
+        loading={procesando}
+        onConfirm={confirmarBaja}
+        onCancel={() =>
+          setProductoParaBaja(null)
+        }
+      />
+
+      <ConfirmDialog
+        open={Boolean(
+          productoParaReactivar
+        )}
+        title="Reactivar producto"
+        message={
+          productoParaReactivar
+            ? `¿Deseas reactivar “${productoParaReactivar.nombre}”? Volverá a aparecer en el inventario activo.`
+            : ""
+        }
+        confirmText="Reactivar"
+        variant="secondary"
+        loading={procesando}
+        onConfirm={
+          confirmarReactivacion
+        }
+        onCancel={() =>
+          setProductoParaReactivar(null)
+        }
+      />
 
       <Toast
         open={toast.open}

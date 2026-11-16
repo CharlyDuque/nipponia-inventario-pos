@@ -10,6 +10,8 @@ import styles from "./ProductoCard.module.css";
 function ProductoCard({
   producto,
   onEditar,
+  onDarDeBaja,
+  onReactivar,
 }) {
   const [imageError, setImageError] =
     useState(false);
@@ -18,18 +20,24 @@ function ProductoCard({
     setImageError(false);
   }, [producto.imagen]);
 
+  const activo =
+    producto.activo !== false;
+
   const disponible =
-    producto.stock > 0;
+    activo && producto.stock > 0;
 
   const mostrarImagen =
-    producto.imagen &&
-    !imageError;
+    producto.imagen && !imageError;
 
   const precio =
     Number(producto.precio) || 0;
 
   return (
-    <article className={styles.card}>
+    <article
+      className={`${styles.card} ${
+        !activo ? styles.inactive : ""
+      }`}
+    >
       <div className={styles.imageContainer}>
         {mostrarImagen ? (
           <img
@@ -54,6 +62,12 @@ function ProductoCard({
 
             <span>Sin imagen</span>
           </div>
+        )}
+
+        {!activo && (
+          <span className={styles.inactiveBadge}>
+            Producto inactivo
+          </span>
         )}
       </div>
 
@@ -93,21 +107,47 @@ function ProductoCard({
                 : styles.outOfStock
             }
           >
-            {disponible
-              ? `${producto.stock} disponibles`
-              : "Agotado"}
+            {!activo
+              ? "Inactivo"
+              : disponible
+                ? `${producto.stock} disponibles`
+                : "Agotado"}
           </span>
         </div>
 
-        <Button
-          variant="outline"
-          fullWidth
-          onClick={() =>
-            onEditar?.(producto)
-          }
-        >
-          Editar producto
-        </Button>
+        {activo ? (
+          <div className={styles.actions}>
+            <Button
+              variant="outline"
+              fullWidth
+              onClick={() =>
+                onEditar?.(producto)
+              }
+            >
+              Editar
+            </Button>
+
+            <Button
+              variant="danger"
+              fullWidth
+              onClick={() =>
+                onDarDeBaja?.(producto)
+              }
+            >
+              Dar de baja
+            </Button>
+          </div>
+        ) : (
+          <Button
+            variant="secondary"
+            fullWidth
+            onClick={() =>
+              onReactivar?.(producto)
+            }
+          >
+            Reactivar producto
+          </Button>
+        )}
       </div>
     </article>
   );

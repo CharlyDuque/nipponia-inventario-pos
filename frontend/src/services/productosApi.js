@@ -1,16 +1,26 @@
 const PRODUCTOS_URL = "/api/productos";
 
 async function procesarRespuesta(respuesta) {
-  const datos = await respuesta.json();
+  let datos;
+
+  try {
+    datos = await respuesta.json();
+  } catch {
+    datos = {
+      mensaje:
+        "El servidor devolvió una respuesta no válida",
+    };
+  }
 
   if (!respuesta.ok) {
     const error = new Error(
       datos.mensaje ||
-        "Ocurrió un error al consultar productos"
+        "Ocurrió un error con los productos"
     );
 
     error.status = respuesta.status;
     error.detalles = datos.errores || [];
+    error.datos = datos;
 
     throw error;
   }
@@ -34,20 +44,34 @@ export async function obtenerProductos({
 
   return procesarRespuesta(respuesta);
 }
-export async function crearProducto(
-  producto
-) {
+
+export async function obtenerTodosLosProductos({
+  signal,
+} = {}) {
+  const respuesta = await fetch(
+    `${PRODUCTOS_URL}/admin/todos`,
+    {
+      method: "GET",
+      headers: {
+        Accept: "application/json",
+      },
+      signal,
+    }
+  );
+
+  return procesarRespuesta(respuesta);
+}
+
+export async function crearProducto(producto) {
   const respuesta = await fetch(
     PRODUCTOS_URL,
     {
       method: "POST",
-
       headers: {
         "Content-Type":
           "application/json",
         Accept: "application/json",
       },
-
       body: JSON.stringify(producto),
     }
   );
@@ -63,14 +87,40 @@ export async function actualizarProducto(
     `${PRODUCTOS_URL}/${id}`,
     {
       method: "PUT",
-
       headers: {
         "Content-Type":
           "application/json",
         Accept: "application/json",
       },
-
       body: JSON.stringify(producto),
+    }
+  );
+
+  return procesarRespuesta(respuesta);
+}
+
+export async function darDeBajaProducto(id) {
+  const respuesta = await fetch(
+    `${PRODUCTOS_URL}/${id}`,
+    {
+      method: "DELETE",
+      headers: {
+        Accept: "application/json",
+      },
+    }
+  );
+
+  return procesarRespuesta(respuesta);
+}
+
+export async function reactivarProducto(id) {
+  const respuesta = await fetch(
+    `${PRODUCTOS_URL}/${id}/reactivar`,
+    {
+      method: "PATCH",
+      headers: {
+        Accept: "application/json",
+      },
     }
   );
 

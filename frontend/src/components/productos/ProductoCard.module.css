@@ -20,6 +20,7 @@
 .imageContainer {
   aspect-ratio: 4 / 3;
   background: var(--color-surface-muted);
+  position: relative;
 }
 
 .image {
@@ -99,4 +100,43 @@
   color: var(--color-primary);
   font-size: 2rem;
   line-height: 1;
+}
+.inactive {
+  opacity: 0.72;
+}
+
+.imageContainer {
+  position: relative;
+}
+
+.inactiveBadge {
+  position: absolute;
+  top: var(--space-sm);
+  right: var(--space-sm);
+
+  padding:
+    var(--space-xs)
+    var(--space-sm);
+
+  border-radius: var(--radius-full);
+
+  background:
+    var(--color-status-danger);
+  color: white;
+
+  font-size: var(--font-caption);
+  font-weight: 800;
+}
+
+.actions {
+  display: grid;
+  grid-template-columns:
+    repeat(2, minmax(0, 1fr));
+  gap: var(--space-sm);
+}
+
+@media (max-width: 420px) {
+  .actions {
+    grid-template-columns: 1fr;
+  }
 }

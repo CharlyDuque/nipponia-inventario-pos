@@ -31,35 +31,92 @@ exports.obtenerPorCodigo = async (req, res) => {
 // Crear producto nuevo
 exports.crearProducto = async (req, res) => {
   try {
-    const nuevoProducto = new Producto(req.body);
-    await nuevoProducto.save();
-    return res.status(201).json(nuevoProducto);
-  } catch (error) {
-    return res.status(400).json({ mensaje: 'Error al crear producto', error: error.message });
-  }
-};
-
-exports.actualizarProducto = async (req, res) => {
-  try {
-    const producto = await Producto.findByIdAndUpdate(
-      req.params.id,
-      req.body,
-      {
-        new: true,
-        runValidators: true,
-      }
+    const producto = await Producto.create(
+      req.body
     );
 
-    if (!producto) {
-      return res.status(404).json({
-        mensaje: "Producto no encontrado",
+    return res
+      .status(201)
+      .json(producto);
+  } catch (error) {
+    if (
+      error.code === 11000 &&
+      error.keyPattern?.codigo
+    ) {
+      return res.status(409).json({
+        mensaje:
+          "El código ya está registrado",
+
+        errores: [
+          {
+            campo: "codigo",
+            mensaje:
+              "Este código ya pertenece a otro producto",
+          },
+        ],
       });
     }
 
-    return res.status(200).json(producto);
+    console.error(
+      "Error al crear producto:",
+      error
+    );
+
+    return res.status(500).json({
+      mensaje:
+        "Error interno al crear producto",
+    });
+  }
+};
+
+exports.actualizarProducto = async (
+  req,
+  res
+) => {
+  try {
+    const producto =
+      await Producto.findByIdAndUpdate(
+        req.params.id,
+        req.body,
+        {
+          returnDocument: "after",
+          runValidators: true,
+        }
+      );
+
+    if (!producto) {
+      return res.status(404).json({
+        mensaje:
+          "Producto no encontrado",
+      });
+    }
+
+    return res
+      .status(200)
+      .json(producto);
   } catch (error) {
+    if (
+      error.code === 11000 &&
+      error.keyPattern?.codigo
+    ) {
+      return res.status(409).json({
+        mensaje:
+          "El código ya está registrado",
+
+        errores: [
+          {
+            campo: "codigo",
+            mensaje:
+              "Este código ya pertenece a otro producto",
+          },
+        ],
+      });
+    }
+
     return res.status(400).json({
-      mensaje: "Error al actualizar producto",
+      mensaje:
+        "Error al actualizar producto",
+
       error: error.message,
     });
   }
