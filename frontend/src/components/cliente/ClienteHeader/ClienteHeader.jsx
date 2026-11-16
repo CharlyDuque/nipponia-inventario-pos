@@ -3,9 +3,20 @@ import {
   NavLink,
 } from "react-router";
 
+import {
+  BookOpen,
+  ShoppingCart,
+} from "lucide-react";
+
+import {
+  useCart,
+} from "../../../context/CartContext";
+
 import styles from "./ClienteHeader.module.css";
 
 function ClienteHeader() {
+  const { cantidadTotal } = useCart();
+
   return (
     <header className={styles.header}>
       <Link
@@ -45,7 +56,12 @@ function ClienteHeader() {
             }`
           }
         >
-          Catálogo
+          <BookOpen
+            size={19}
+            aria-hidden="true"
+          />
+
+          <span>Catálogo</span>
         </NavLink>
 
         <NavLink
@@ -58,7 +74,25 @@ function ClienteHeader() {
             }`
           }
         >
-          Carrito
+          <span className={styles.cartIcon}>
+            <ShoppingCart
+              size={19}
+              aria-hidden="true"
+            />
+
+            {cantidadTotal > 0 && (
+              <span
+                className={styles.badge}
+                aria-label={`${cantidadTotal} unidades en el carrito`}
+              >
+                {cantidadTotal > 99
+                  ? "99+"
+                  : cantidadTotal}
+              </span>
+            )}
+          </span>
+
+          <span>Carrito</span>
         </NavLink>
       </nav>
 
