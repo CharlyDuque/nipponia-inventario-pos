@@ -76,6 +76,9 @@
   min-height: 44px;
   align-items: center;
   gap: var(--space-sm);
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-sm);
 
   padding:
     0.7rem
@@ -177,4 +180,41 @@
   .operadorLink {
     display: none;
   }
+}
+.link {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-sm);
+}
+
+.cartIcon {
+  position: relative;
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.badge {
+  position: absolute;
+  top: -11px;
+  right: -13px;
+
+  display: grid;
+  min-width: 20px;
+  height: 20px;
+  place-items: center;
+
+  padding-inline: 5px;
+
+  border: 2px solid
+    var(--color-bg-deep);
+  border-radius: var(--radius-full);
+
+  background: var(--color-status-danger);
+  color: white;
+
+  font-size: 0.65rem;
+  font-weight: 900;
+  line-height: 1;
 }
