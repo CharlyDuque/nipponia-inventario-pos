@@ -110,15 +110,28 @@ function CatalogoPage() {
   );
 
   function manejarAgregar(producto) {
+  const resultado =
     agregarProducto(producto);
 
+  if (!resultado.agregado) {
     setToast({
       open: true,
       message:
-        `${producto.nombre} agregado al carrito`,
-      type: "success",
+        resultado.mensaje ||
+        "No fue posible agregar el producto",
+      type: "error",
     });
+
+    return;
   }
+
+  setToast({
+    open: true,
+    message:
+      `${producto.nombre} agregado al carrito`,
+    type: "success",
+  });
+}
 
   return (
     <main className={styles.page}>

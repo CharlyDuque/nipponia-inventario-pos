@@ -1,5 +1,6 @@
 import {
   createContext,
+  useCallback,
   useContext,
   useEffect,
   useMemo,
@@ -8,8 +9,7 @@ import {
 
 const CartContext = createContext(null);
 
-const STORAGE_KEY =
-  "nipponia-carrito";
+const STORAGE_KEY = "nipponia-carrito";
 
 function cargarCarritoInicial() {
   try {
@@ -18,12 +18,26 @@ function cargarCarritoInicial() {
         STORAGE_KEY
       );
 
-    return datos
-      ? JSON.parse(datos)
+    if (!datos) {
+      return [];
+    }
+
+    const carrito = JSON.parse(datos);
+
+    return Array.isArray(carrito)
+      ? carrito
       : [];
   } catch {
     return [];
   }
+}
+
+function redondearDinero(valor) {
+  return (
+    Math.round(
+      (valor + Number.EPSILON) * 100
+    ) / 100
+  );
 }
 
 export function CartProvider({
@@ -40,35 +54,54 @@ export function CartProvider({
   }, [items]);
 
   function agregarProducto(producto) {
+    if (
+      producto.activo === false ||
+      producto.stock <= 0
+    ) {
+      return {
+        agregado: false,
+        mensaje:
+          "El producto no está disponible",
+      };
+    }
+
+    let agregado = false;
+    let mensaje = "";
+
     setItems((actuales) => {
-      const existente =
-        actuales.find(
-          (item) =>
-            item.productoId ===
-            producto._id
-        );
+      const existente = actuales.find(
+        (item) =>
+          item.productoId === producto._id
+      );
 
       if (existente) {
-        return actuales.map((item) => {
-          if (
-            item.productoId !==
-            producto._id
-          ) {
-            return item;
-          }
+        if (
+          existente.cantidad >=
+          producto.stock
+        ) {
+          mensaje =
+            "Ya agregaste todo el stock disponible";
 
-          const nuevaCantidad =
-            Math.min(
-              item.cantidad + 1,
-              producto.stock
-            );
+          return actuales;
+        }
 
-          return {
-            ...item,
-            cantidad: nuevaCantidad,
-          };
-        });
+        agregado = true;
+
+        return actuales.map((item) =>
+          item.productoId === producto._id
+            ? {
+                ...item,
+                precio: producto.precio,
+                stockDisponible:
+                  producto.stock,
+                cantidad:
+                  item.cantidad + 1,
+              }
+            : item
+        );
       }
+
+      agregado = true;
 
       return [
         ...actuales,
@@ -84,6 +117,11 @@ export function CartProvider({
         },
       ];
     });
+
+    return {
+      agregado,
+      mensaje,
+    };
   }
 
   function actualizarCantidad(
@@ -98,13 +136,19 @@ export function CartProvider({
           return item;
         }
 
-        const cantidadSegura = Math.max(
-          1,
-          Math.min(
-            cantidad,
-            item.stockDisponible
-          )
-        );
+        const numero =
+          Number(cantidad);
+
+        const cantidadSegura =
+          Number.isFinite(numero)
+            ? Math.max(
+                1,
+                Math.min(
+                  Math.trunc(numero),
+                  item.stockDisponible
+                )
+              )
+            : 1;
 
         return {
           ...item,
@@ -127,6 +171,114 @@ export function CartProvider({
     setItems([]);
   }
 
+  const sincronizarCarrito = useCallback(
+  (productosActuales) => {
+    const cambios = {
+      eliminados: [],
+      cantidadesAjustadas: [],
+      preciosActualizados: [],
+    };
+
+    let carritoModificado = false;
+
+    const sincronizados = [];
+
+    for (const item of items) {
+      const productoActual =
+        productosActuales.find(
+          (producto) =>
+            producto._id ===
+            item.productoId
+        );
+
+      if (
+        !productoActual ||
+        productoActual.activo === false ||
+        productoActual.stock <= 0
+      ) {
+        cambios.eliminados.push(
+          item.nombre
+        );
+
+        carritoModificado = true;
+        continue;
+      }
+
+      let cantidad = item.cantidad;
+
+      if (
+        cantidad >
+        productoActual.stock
+      ) {
+        cantidad =
+          productoActual.stock;
+
+        cambios.cantidadesAjustadas.push({
+          nombre: item.nombre,
+          cantidad,
+        });
+
+        carritoModificado = true;
+      }
+
+      if (
+        Number(item.precio) !==
+        Number(productoActual.precio)
+      ) {
+        cambios.preciosActualizados.push({
+          nombre: item.nombre,
+          precioAnterior:
+            item.precio,
+          precioNuevo:
+            productoActual.precio,
+        });
+
+        carritoModificado = true;
+      }
+
+      if (
+        item.nombre !==
+          productoActual.nombre ||
+        item.codigo !==
+          productoActual.codigo ||
+        item.stockDisponible !==
+          productoActual.stock ||
+        item.imagen !==
+          (productoActual.imagen || "")
+      ) {
+        carritoModificado = true;
+      }
+
+      sincronizados.push({
+        ...item,
+        codigo:
+          productoActual.codigo,
+
+        nombre:
+          productoActual.nombre,
+
+        precio:
+          productoActual.precio,
+
+        stockDisponible:
+          productoActual.stock,
+
+        imagen:
+          productoActual.imagen || "",
+
+        cantidad,
+      });
+    }
+
+    if (carritoModificado) {
+      setItems(sincronizados);
+    }
+
+    return cambios;
+  },
+  [items]
+);
+
   const cantidadTotal = useMemo(
     () =>
       items.reduce(
@@ -139,25 +291,35 @@ export function CartProvider({
 
   const subtotal = useMemo(
     () =>
-      items.reduce(
-        (total, item) =>
-          total +
-          item.precio *
-            item.cantidad,
-        0
+      redondearDinero(
+        items.reduce(
+          (total, item) =>
+            total +
+            Number(item.precio) *
+              item.cantidad,
+          0
+        )
       ),
     [items]
   );
 
-  const value = {
-    items,
-    cantidadTotal,
-    subtotal,
-    agregarProducto,
-    actualizarCantidad,
-    eliminarProducto,
-    vaciarCarrito,
-  };
+  const value = useMemo(
+    () => ({
+      items,
+      cantidadTotal,
+      subtotal,
+      agregarProducto,
+      actualizarCantidad,
+      eliminarProducto,
+      vaciarCarrito,
+      sincronizarCarrito,
+    }),
+    [
+      items,
+      cantidadTotal,
+      subtotal,
+    ]
+  );
 
   return (
     <CartContext.Provider

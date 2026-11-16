@@ -8,6 +8,17 @@ import {
 
 import styles from "./CarritoPage.module.css";
 
+import {
+  useEffect,
+  useState,
+} from "react";
+
+import Toast from
+  "../components/Toast/Toast";
+
+import {
+  obtenerProductos,
+} from "../services/productosApi";
 function CarritoPage() {
   const {
     items,
@@ -15,7 +26,153 @@ function CarritoPage() {
     actualizarCantidad,
     eliminarProducto,
     vaciarCarrito,
+    sincronizarCarrito,
   } = useCart();
+
+  const [toast, setToast] = useState({
+    open: false,
+    message: "",
+    type: "success",
+  });
+
+  useEffect(() => {
+  const controller =
+    new AbortController();
+
+  let sincronizando = false;
+
+  async function sincronizar({
+    mostrarAvisos = true,
+  } = {}) {
+    if (sincronizando) {
+      return;
+    }
+
+    sincronizando = true;
+
+    try {
+      const productosActuales =
+        await obtenerProductos({
+          signal:
+            controller.signal,
+        });
+
+      const cambios =
+        sincronizarCarrito(
+          productosActuales
+        );
+
+      if (!mostrarAvisos) {
+        return;
+      }
+
+      const mensajes = [];
+
+      if (
+        cambios.eliminados.length > 0
+      ) {
+        mensajes.push(
+          `${cambios.eliminados.length} producto(s) dejaron de estar disponibles`
+        );
+      }
+
+      if (
+        cambios.cantidadesAjustadas
+          .length > 0
+      ) {
+        mensajes.push(
+          `${cambios.cantidadesAjustadas.length} cantidad(es) fueron ajustadas al stock actual`
+        );
+      }
+
+      if (
+        cambios.preciosActualizados
+          .length > 0
+      ) {
+        mensajes.push(
+          `${cambios.preciosActualizados.length} precio(s) fueron actualizados`
+        );
+      }
+
+      if (mensajes.length > 0) {
+        setToast({
+          open: true,
+          message: mensajes.join(". "),
+          type: "info",
+        });
+      }
+    } catch (requestError) {
+      if (
+        requestError.name !==
+        "AbortError"
+      ) {
+        setToast({
+          open: true,
+          message:
+            "No fue posible verificar el inventario actual",
+          type: "error",
+        });
+      }
+    } finally {
+      sincronizando = false;
+    }
+  }
+
+  sincronizar();
+
+  const intervalId =
+    window.setInterval(() => {
+      sincronizar();
+    }, 5000);
+
+  function sincronizarAlRecuperarFoco() {
+    sincronizar();
+  }
+
+  function sincronizarAlMostrarPestaña() {
+    if (
+      document.visibilityState ===
+      "visible"
+    ) {
+      sincronizar();
+    }
+  }
+
+  window.addEventListener(
+    "focus",
+    sincronizarAlRecuperarFoco
+  );
+
+  document.addEventListener(
+    "visibilitychange",
+    sincronizarAlMostrarPestaña
+  );
+
+  return () => {
+    controller.abort();
+
+    window.clearInterval(
+      intervalId
+    );
+
+    window.removeEventListener(
+      "focus",
+      sincronizarAlRecuperarFoco
+    );
+
+    document.removeEventListener(
+      "visibilitychange",
+      sincronizarAlMostrarPestaña
+    );
+  };
+}, [sincronizarCarrito]);
+
+  const cerrarToast = () =>
+    setToast({
+      open: false,
+      message: "",
+      type: "success",
+    });
 
   if (items.length === 0) {
     return (
@@ -39,6 +196,13 @@ function CarritoPage() {
             Explorar catálogo
           </Link>
         </section>
+
+        <Toast
+          open={toast.open}
+          message={toast.message}
+          type={toast.type}
+          onClose={cerrarToast}
+        />
       </main>
     );
   }
@@ -169,6 +333,13 @@ function CarritoPage() {
           </Button>
         </aside>
       </section>
+
+      <Toast
+        open={toast.open}
+        message={toast.message}
+        type={toast.type}
+        onClose={cerrarToast}
+      />
     </main>
   );
 }
