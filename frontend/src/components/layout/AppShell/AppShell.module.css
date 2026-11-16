@@ -1,0 +1,27 @@
+.shell {
+  min-height: 100vh;
+  background: var(--color-bg-canvas);
+}
+
+.content {
+  min-height: 100vh;
+  padding-bottom:
+    calc(
+      var(--bottom-nav-height-mobile) +
+      var(--space-lg)
+    );
+}
+
+@media (min-width: 768px) {
+  .content {
+    margin-left: var(--rail-width-tablet);
+    padding-bottom: 0;
+  }
+}
+
+@media (min-width: 1024px) {
+  .content {
+    margin-left:
+      var(--sidebar-width-desktop);
+  }
+}
