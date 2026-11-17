@@ -12,6 +12,11 @@ function Modal({
   onClose,
 }) {
   const dialogRef = useRef(null);
+  const onCloseRef = useRef(onClose);
+
+  useEffect(() => {
+    onCloseRef.current = onClose;
+  }, [onClose]);
 
   useEffect(() => {
     if (!open) {
@@ -24,11 +29,14 @@ function Modal({
     document.body.style.overflow =
       "hidden";
 
-    dialogRef.current?.focus();
+    const timeoutId =
+      window.setTimeout(() => {
+        dialogRef.current?.focus();
+      }, 0);
 
     function handleKeyDown(event) {
       if (event.key === "Escape") {
-        onClose?.();
+        onCloseRef.current?.();
       }
     }
 
@@ -38,6 +46,8 @@ function Modal({
     );
 
     return () => {
+      window.clearTimeout(timeoutId);
+
       document.body.style.overflow =
         previousOverflow;
 
@@ -46,23 +56,25 @@ function Modal({
         handleKeyDown
       );
     };
-  }, [open, onClose]);
+  }, [open]);
 
   if (!open) {
     return null;
   }
 
+  function handleBackdrop(event) {
+    if (
+      event.target ===
+      event.currentTarget
+    ) {
+      onCloseRef.current?.();
+    }
+  }
+
   return (
     <div
       className={styles.backdrop}
-      onMouseDown={(event) => {
-        if (
-          event.target ===
-          event.currentTarget
-        ) {
-          onClose?.();
-        }
-      }}
+      onMouseDown={handleBackdrop}
     >
       <section
         ref={dialogRef}
@@ -84,7 +96,9 @@ function Modal({
             type="button"
             className={styles.close}
             aria-label="Cerrar ventana"
-            onClick={onClose}
+            onClick={() =>
+              onCloseRef.current?.()
+            }
           >
             ×
           </button>

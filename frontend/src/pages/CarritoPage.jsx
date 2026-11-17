@@ -25,6 +25,8 @@ import {
 
 import styles from "./CarritoPage.module.css";
 
+import CantidadControl from 
+"../components/cliente/CantidadControl/CantidadControl";
 function CarritoPage() {
   const {
     items,
@@ -319,27 +321,20 @@ function CarritoPage() {
               </div>
 
               <div className={styles.controls}>
-                <label>
-                  <span>Cantidad</span>
+                <div className={styles.quantity}>
+  <span>Cantidad</span>
 
-                  <input
-                    type="number"
-                    min="1"
-                    max={
-                      item.stockDisponible
-                    }
-                    step="1"
-                    value={item.cantidad}
-                    onChange={(event) =>
-                      actualizarCantidad(
-                        item.productoId,
-                        Number(
-                          event.target.value
-                        )
-                      )
-                    }
-                  />
-                </label>
+  <CantidadControl
+    value={item.cantidad}
+    max={item.stockDisponible}
+    onChange={(cantidad) =>
+      actualizarCantidad(
+        item.productoId,
+        cantidad
+      )
+    }
+  />
+</div>
 
                 <strong
                   className={`${styles.itemSubtotal} tabular`}

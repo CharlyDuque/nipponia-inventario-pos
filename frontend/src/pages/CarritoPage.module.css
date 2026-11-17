@@ -89,18 +89,6 @@
   font-size: var(--font-caption);
 }
 
-.controls input {
-  width: 90px;
-  min-height: 44px;
-
-  padding-inline: var(--space-sm);
-
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-sm);
-
-  background: var(--color-bg-canvas);
-  color: var(--color-text-primary);
-}
 
 .itemSubtotal {
   font-size: var(--font-price);
@@ -204,4 +192,11 @@
     align-items: end;
     justify-items: start;
   }
+}
+.quantity {
+  display: grid;
+  gap: var(--space-xs);
+
+  color: var(--color-text-muted);
+  font-size: var(--font-caption);
 }
