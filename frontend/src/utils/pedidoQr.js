@@ -1,39 +1,35 @@
-export function crearPedidoQr(items) {
-  const pedido = {
-    tipo: "nipponia-pedido",
-    version: 1,
-    creadoEn: new Date().toISOString(),
+const OBJECT_ID_PATTERN =
+  /^[a-fA-F0-9]{24}$/;
 
-    productos: items.map((item) => ({
-      productoId: item.productoId,
-      cantidad: item.cantidad,
-    })),
+export function crearPedidoQr(
+  pedidoId
+) {
+  const pedidoQr = {
+    tipo: "nipponia-pedido",
+    version: 2,
+    pedidoId,
   };
 
   return {
-    pedido,
-    contenido: JSON.stringify(pedido),
+    pedido: pedidoQr,
+
+    contenido:
+      JSON.stringify(pedidoQr),
   };
 }
 
-export function validarPedidoQr(datos) {
-  if (
-    !datos ||
-    datos.tipo !== "nipponia-pedido" ||
-    datos.version !== 1 ||
-    !Array.isArray(datos.productos) ||
-    datos.productos.length === 0
-  ) {
-    return false;
-  }
-
-  return datos.productos.every(
-    (item) =>
-      typeof item.productoId === "string" &&
-      /^[a-fA-F0-9]{24}$/.test(
-        item.productoId
-      ) &&
-      Number.isInteger(item.cantidad) &&
-      item.cantidad > 0
+export function validarPedidoQr(
+  datos
+) {
+  return Boolean(
+    datos &&
+      datos.tipo ===
+        "nipponia-pedido" &&
+      datos.version === 2 &&
+      typeof datos.pedidoId ===
+        "string" &&
+      OBJECT_ID_PATTERN.test(
+        datos.pedidoId
+      )
   );
 }

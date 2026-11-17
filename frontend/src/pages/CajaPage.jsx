@@ -21,6 +21,10 @@ import {
 
 import styles from "./CajaPage.module.css";
 
+import {
+  obtenerPedidoOperador,
+} from "../services/pedidosApi";
+
 function redondearDinero(valor) {
   return (
     Math.round(
@@ -44,6 +48,9 @@ function CajaPage() {
 
   const [pedido, setPedido] =
     useState([]);
+
+  const [pedidoId, setPedidoId] =
+    useState("");
 
   const [cargando, setCargando] =
     useState(false);
@@ -109,7 +116,7 @@ function CajaPage() {
       0,
       redondearDinero(
         Number(efectivoRecibido) -
-          total
+        total
       )
     );
   }, [
@@ -123,7 +130,7 @@ function CajaPage() {
       pedido.reduce(
         (acumulado, item) =>
           acumulado +
-            item.cantidad,
+          item.cantidad,
         0
       ),
     [pedido]
@@ -143,6 +150,7 @@ function CajaPage() {
   function limpiarPedido() {
     setContenidoQr("");
     setPedido([]);
+    setPedidoId("");
   }
 
   async function cargarPedido() {
@@ -166,7 +174,22 @@ function CajaPage() {
           "El código no contiene un pedido Nipponia válido"
         );
       }
+      const pedidoPersistente =
+        await obtenerPedidoOperador(
+          datos.pedidoId
+        );
 
+      if (
+        pedidoPersistente.estado !==
+        "Pendiente"
+      ) {
+        throw new Error(
+          `El pedido tiene estado ${pedidoPersistente.estado}`
+        );
+      }
+
+      const productosQr =
+        pedidoPersistente.productos;
       const productosActuales =
         await obtenerTodosLosProductos();
 
@@ -181,7 +204,7 @@ function CajaPage() {
         );
 
       const pedidoReconstruido =
-        datos.productos.map((item) => {
+        productosQr.map((item) => {
           const producto =
             productosPorId.get(
               item.productoId
@@ -216,7 +239,7 @@ function CajaPage() {
           const subtotal =
             redondearDinero(
               precioUnitario *
-                item.cantidad
+              item.cantidad
             );
 
           return {
@@ -240,6 +263,10 @@ function CajaPage() {
           };
         });
 
+      setPedidoId(
+        datos.pedidoId
+      );
+
       setPedido(
         pedidoReconstruido
       );
@@ -248,11 +275,12 @@ function CajaPage() {
         "Pedido cargado y verificado correctamente"
       );
     } catch (error) {
+      setPedidoId("");
       setPedido([]);
 
       mostrarToast(
         error.message ||
-          "No fue posible cargar el pedido",
+        "No fue posible cargar el pedido",
         "error"
       );
     } finally {
@@ -284,6 +312,8 @@ function CajaPage() {
 
     try {
       const cuerpo = {
+        pedidoId,
+
         productos: pedido.map(
           (item) => ({
             productoId:
@@ -310,6 +340,7 @@ function CajaPage() {
 
       setPagoAbierto(false);
       setPedido([]);
+      setPedidoId("");
       setContenidoQr("");
 
       mostrarToast(
@@ -318,7 +349,7 @@ function CajaPage() {
     } catch (error) {
       setErrorPago(
         error.message ||
-          "No fue posible registrar la venta"
+        "No fue posible registrar la venta"
       );
     } finally {
       setProcesandoVenta(false);
@@ -557,5 +588,4 @@ function CajaPage() {
     </main>
   );
 }
-
 export default CajaPage;
