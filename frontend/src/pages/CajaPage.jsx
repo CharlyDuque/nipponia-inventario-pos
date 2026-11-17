@@ -29,6 +29,15 @@ function redondearDinero(valor) {
   );
 }
 
+import Modal from "../components/Modal/Modal";
+import PagoForm from "../components/caja/PagoForm/PagoForm";
+import TicketVenta from "../components/caja/TicketVenta/TicketVenta";
+
+import {
+  registrarVenta,
+} from "../services/ventasApi";
+
+
 function CajaPage() {
   const [contenidoQr, setContenidoQr] =
     useState("");
@@ -45,6 +54,36 @@ function CajaPage() {
     type: "success",
   });
 
+  const [
+    pagoAbierto,
+    setPagoAbierto,
+  ] = useState(false);
+
+  const [
+    metodoPago,
+    setMetodoPago,
+  ] = useState("Efectivo");
+
+  const [
+    efectivoRecibido,
+    setEfectivoRecibido,
+  ] = useState("");
+
+  const [
+    procesandoVenta,
+    setProcesandoVenta,
+  ] = useState(false);
+
+  const [
+    errorPago,
+    setErrorPago,
+  ] = useState("");
+
+  const [
+    ventaCreada,
+    setVentaCreada,
+  ] = useState(null);
+
   const total = useMemo(
     () =>
       redondearDinero(
@@ -57,6 +96,27 @@ function CajaPage() {
       ),
     [pedido]
   );
+
+  const cambio = useMemo(() => {
+    if (
+      metodoPago !== "Efectivo" ||
+      efectivoRecibido === ""
+    ) {
+      return 0;
+    }
+
+    return Math.max(
+      0,
+      redondearDinero(
+        Number(efectivoRecibido) -
+          total
+      )
+    );
+  }, [
+    metodoPago,
+    efectivoRecibido,
+    total,
+  ]);
 
   const cantidadTotal = useMemo(
     () =>
@@ -198,6 +258,75 @@ function CajaPage() {
     } finally {
       setCargando(false);
     }
+  }
+
+  function abrirPago() {
+    setMetodoPago("Efectivo");
+    setEfectivoRecibido("");
+    setErrorPago("");
+    setPagoAbierto(true);
+  }
+
+  function cerrarPago() {
+    if (procesandoVenta) {
+      return;
+    }
+
+    setPagoAbierto(false);
+    setErrorPago("");
+  }
+
+  async function confirmarVenta(event) {
+    event.preventDefault();
+
+    setProcesandoVenta(true);
+    setErrorPago("");
+
+    try {
+      const cuerpo = {
+        productos: pedido.map(
+          (item) => ({
+            productoId:
+              item.productoId,
+            cantidad:
+              item.cantidad,
+          })
+        ),
+
+        metodoPago,
+      };
+
+      if (metodoPago === "Efectivo") {
+        cuerpo.efectivoRecibido =
+          Number(efectivoRecibido);
+      }
+
+      const respuesta =
+        await registrarVenta(cuerpo);
+
+      setVentaCreada(
+        respuesta.venta
+      );
+
+      setPagoAbierto(false);
+      setPedido([]);
+      setContenidoQr("");
+
+      mostrarToast(
+        "Venta registrada correctamente"
+      );
+    } catch (error) {
+      setErrorPago(
+        error.message ||
+          "No fue posible registrar la venta"
+      );
+    } finally {
+      setProcesandoVenta(false);
+    }
+  }
+
+  function finalizarTicket() {
+    setVentaCreada(null);
   }
 
   return (
@@ -366,17 +495,52 @@ function CajaPage() {
             disabled={
               pedido.length === 0
             }
-            onClick={() =>
-              mostrarToast(
-                "El siguiente bloque agregará el método de pago",
-                "info"
-              )
-            }
+            onClick={abrirPago}
           >
             Continuar al pago
           </Button>
         </aside>
       </section>
+
+      <Modal
+        open={pagoAbierto}
+        title="Confirmar cobro"
+        onClose={cerrarPago}
+      >
+        <PagoForm
+          metodoPago={metodoPago}
+          efectivoRecibido={
+            efectivoRecibido
+          }
+          total={total}
+          cambio={cambio}
+          procesando={procesandoVenta}
+          error={errorPago}
+          onMetodoChange={
+            setMetodoPago
+          }
+          onEfectivoChange={
+            setEfectivoRecibido
+          }
+          onConfirmar={
+            confirmarVenta
+          }
+          onCancelar={cerrarPago}
+        />
+      </Modal>
+
+      <Modal
+        open={Boolean(ventaCreada)}
+        title="Ticket de venta"
+        onClose={finalizarTicket}
+      >
+        {ventaCreada && (
+          <TicketVenta
+            venta={ventaCreada}
+            onClose={finalizarTicket}
+          />
+        )}
+      </Modal>
 
       <Toast
         open={toast.open}

@@ -39,7 +39,6 @@ export async function registrarVenta(venta) {
       headers: crearHeadersOperador({
         "Content-Type":
           "application/json",
-
         Accept: "application/json",
       }),
 
@@ -64,10 +63,9 @@ export async function obtenerVentas() {
 }
 
 export async function obtenerCorte(fecha) {
-  const parametros =
-    fecha
-      ? `?fecha=${encodeURIComponent(fecha)}`
-      : "";
+  const parametros = fecha
+    ? `?fecha=${encodeURIComponent(fecha)}`
+    : "";
 
   const respuesta = await fetch(
     `/api/ventas/corte${parametros}`,
@@ -93,7 +91,6 @@ export async function cancelarVenta(
       headers: crearHeadersOperador({
         "Content-Type":
           "application/json",
-
         Accept: "application/json",
       }),
 
@@ -105,4 +102,3 @@ export async function cancelarVenta(
 
   return procesarRespuesta(respuesta);
 }
-
