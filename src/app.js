@@ -21,6 +21,8 @@ const app = express();
 const operadorRoutes = require(
   "./routes/operador"
 );
+
+
 app.use(cors());
 app.use(express.json());
 
