@@ -3,6 +3,7 @@ const { DateTime } = require("luxon");
 
 const Producto = require("../models/Producto");
 const Venta = require("../models/Venta");
+const Pedido = require("../models/Pedido");
 
 const redondearDinero = (cantidad) =>
   Math.round((cantidad + Number.EPSILON) * 100) / 100;
@@ -22,6 +23,32 @@ const crearFolio = () => {
   return `NIP-${fechaTexto}-${aleatorio}`;
 };
 
+const normalizarItems = (items) =>
+  items
+    .map((item) => ({
+      productoId:
+        String(item.productoId),
+
+      cantidad:
+        Number(item.cantidad),
+    }))
+    .sort((a, b) =>
+      a.productoId.localeCompare(
+        b.productoId
+      )
+    );
+
+const productosCoinciden = (
+  itemsPedido,
+  itemsVenta
+) =>
+  JSON.stringify(
+    normalizarItems(itemsPedido)
+  ) ===
+  JSON.stringify(
+    normalizarItems(itemsVenta)
+  );
+
 exports.registrarVenta = async (req, res) => {
   const session = await mongoose.startSession();
 
@@ -32,111 +59,145 @@ exports.registrarVenta = async (req, res) => {
       const productosVendidos = [];
       let total = 0;
 
-      for (const item of req.body.productos) {
-        /*
-         * El filtro comprueba simultáneamente:
-         * - que el producto exista;
-         * - que esté activo;
-         * - que tenga stock suficiente.
-         *
-         * El descuento se realiza atómicamente.
-         */
-        const producto = await Producto.findOneAndUpdate(
-          {
-            _id: item.productoId,
-            activo: { $ne: false },
-            stock: { $gte: item.cantidad },
-          },
-          {
-            $inc: {
-              stock: -item.cantidad,
-            },
-          },
-            {
-                returnDocument: "after",
-                session,
-            }
-        );
+      let pedidoRelacionado = null;
 
-        if (!producto) {
-          const productoExistente = await Producto.findById(
-            item.productoId
+      if (req.body.pedidoId) {
+        pedidoRelacionado =
+          await Pedido.findById(
+            req.body.pedidoId
           ).session(session);
 
-          if (!productoExistente) {
-            throw new Error(
-              `PRODUCTO_NO_ENCONTRADO:${item.productoId}`
-            );
-          }
-
-          if (productoExistente.activo === false) {
-            throw new Error(
-              `PRODUCTO_INACTIVO:${productoExistente.nombre}`
-            );
-          }
-
+        if (!pedidoRelacionado) {
           throw new Error(
-            `STOCK_INSUFICIENTE:${productoExistente.nombre}:${productoExistente.stock}`
+            `PEDIDO_NO_ENCONTRADO:${req.body.pedidoId}`
           );
         }
 
-        const subtotal = redondearDinero(
-          producto.precio * item.cantidad
-        );
+        if (
+          pedidoRelacionado.estado !==
+          "Pendiente"
+        ) {
+          throw new Error(
+            `PEDIDO_NO_DISPONIBLE:${pedidoRelacionado.estado}`
+          );
+        }
 
-        total = redondearDinero(total + subtotal);
+        if (
+          pedidoRelacionado.expiraEn &&
+          pedidoRelacionado.expiraEn <=
+          new Date()
+        ) {
+          throw new Error(
+            `PEDIDO_EXPIRADO:${pedidoRelacionado._id}`
+          );
+        }
+
+        if (
+          !productosCoinciden(
+            pedidoRelacionado.productos,
+            req.body.productos
+          )
+        ) {
+          throw new Error(
+            `PEDIDO_NO_COINCIDE:${pedidoRelacionado._id}`
+          );
+        }
+      }
+
+      for (const item of req.body.productos) {
+        const producto = await Producto.findById(
+          item.productoId
+        ).session(session);
+
+        if (!producto) {
+          throw new Error(
+            `PRODUCTO_NO_ENCONTRADO:${item.productoId}`
+          );
+        }
+
+        if (!producto.activo) {
+          throw new Error(
+            `PRODUCTO_INACTIVO:${producto.nombre}`
+          );
+        }
+
+        const cantidad = Number(item.cantidad);
+
+        if (!Number.isInteger(cantidad) || cantidad < 1) {
+          throw new Error(
+            `STOCK_INSUFICIENTE:${producto.nombre}:0`
+          );
+        }
+
+        if (producto.stock < cantidad) {
+          throw new Error(
+            `STOCK_INSUFICIENTE:${producto.nombre}:${producto.stock}`
+          );
+        }
+
+        producto.stock -= cantidad;
+        await producto.save({ session });
+
+        const subtotal = redondearDinero(
+          producto.precio * cantidad
+        );
 
         productosVendidos.push({
           productoId: producto._id,
           codigo: producto.codigo,
           nombre: producto.nombre,
-          cantidad: item.cantidad,
+          cantidad,
           precioUnitario: producto.precio,
           subtotal,
         });
+
+        total = redondearDinero(total + subtotal);
       }
 
-      const {
-        metodoPago,
-        efectivoRecibido,
-      } = req.body;
-
-      let efectivoGuardado = null;
-      let cambio = 0;
-
-      if (metodoPago === "Efectivo") {
-        if (efectivoRecibido < total) {
-          throw new Error(
-            `EFECTIVO_INSUFICIENTE:${total}`
-          );
-        }
-
-        efectivoGuardado = redondearDinero(
-          efectivoRecibido
-        );
-
-        cambio = redondearDinero(
-          efectivoRecibido - total
-        );
-      }
-
-      const documentos = await Venta.create(
-        [
-          {
-            folio: crearFolio(),
-            productos: productosVendidos,
-            total,
-            metodoPago,
-            efectivoRecibido: efectivoGuardado,
-            cambio,
-          },
-        ],
-        {
-          session,
-        }
+      const metodoPago = req.body.metodoPago;
+      const efectivoRecibido = Number(
+        req.body.efectivoRecibido
       );
 
-      ventaCreada = documentos[0];
+      if (
+        metodoPago === "Efectivo" &&
+        (!Number.isFinite(efectivoRecibido) ||
+          efectivoRecibido < total)
+      ) {
+        throw new Error(`EFECTIVO_INSUFICIENTE:${total}`);
+      }
+
+      const venta = new Venta({
+        folio: crearFolio(),
+        productos: productosVendidos,
+        total,
+        metodoPago,
+        efectivoRecibido:
+          metodoPago === "Efectivo"
+            ? redondearDinero(efectivoRecibido)
+            : null,
+        cambio:
+          metodoPago === "Efectivo"
+            ? redondearDinero(efectivoRecibido - total)
+            : 0,
+      });
+
+      await venta.save({ session });
+
+      ventaCreada = venta;
+
+      if (pedidoRelacionado) {
+        pedidoRelacionado.estado =
+          "Completado";
+
+        pedidoRelacionado.ventaId =
+          ventaCreada._id;
+
+        pedidoRelacionado.completadoEn =
+          new Date();
+
+        await pedidoRelacionado.save({ session });
+      }
     });
 
     return res.status(201).json({
@@ -147,6 +208,36 @@ exports.registrarVenta = async (req, res) => {
   } catch (error) {
     const [tipo, detalle, dato] =
       error.message.split(":");
+      if (tipo === "PEDIDO_NO_ENCONTRADO") {
+  return res.status(404).json({
+    mensaje: "Pedido no encontrado",
+    pedidoId: detalle,
+  });
+}
+
+if (tipo === "PEDIDO_NO_DISPONIBLE") {
+  return res.status(409).json({
+    mensaje:
+      "El pedido ya no está disponible para cobro",
+    estado: detalle,
+  });
+}
+
+if (tipo === "PEDIDO_EXPIRADO") {
+  return res.status(409).json({
+    mensaje:
+      "El pedido expiró. El cliente debe generar un nuevo QR",
+    pedidoId: detalle,
+  });
+}
+
+if (tipo === "PEDIDO_NO_COINCIDE") {
+  return res.status(409).json({
+    mensaje:
+      "Los productos enviados no coinciden con el pedido original",
+    pedidoId: detalle,
+  });
+}
 
     if (tipo === "PRODUCTO_NO_ENCONTRADO") {
       return res.status(404).json({
@@ -173,6 +264,36 @@ exports.registrarVenta = async (req, res) => {
         mensaje:
           "El efectivo recibido es menor que el total de la venta",
         total: Number(detalle),
+      });
+    }
+
+    if (tipo === "PEDIDO_NO_ENCONTRADO") {
+      return res.status(404).json({
+        mensaje: "Pedido no encontrado",
+        pedidoId: detalle,
+      });
+    }
+
+    if (tipo === "PEDIDO_EXPIRADO") {
+      return res.status(409).json({
+        mensaje: "El pedido expiró",
+        pedidoId: detalle,
+      });
+    }
+
+    if (
+      tipo === "PEDIDO_NO_DISPONIBLE" ||
+      tipo === "PEDIDO_NO_COINCIDE"
+    ) {
+      return res.status(409).json({
+        mensaje:
+          tipo === "PEDIDO_NO_DISPONIBLE"
+            ? `El pedido ya no está disponible (${detalle})`
+            : "Los productos no coinciden con el pedido",
+        pedidoId:
+          tipo === "PEDIDO_NO_COINCIDE"
+            ? detalle
+            : undefined,
       });
     }
 

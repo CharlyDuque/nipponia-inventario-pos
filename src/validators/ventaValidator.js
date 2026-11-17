@@ -18,55 +18,34 @@ const itemVentaSchema = z
 
 const crearVentaSchema = z
   .object({
+    pedidoId: z
+      .string()
+      .regex(
+        /^[a-fA-F0-9]{24}$/,
+        "El identificador del pedido no es válido"
+      )
+      .optional(),
+
     productos: z
       .array(itemVentaSchema)
-      .min(1, "El carrito debe contener al menos un producto"),
+      .min(
+        1,
+        "El carrito debe contener al menos un producto"
+      ),
 
     metodoPago: z.enum(
-      ["Efectivo", "Transferencia"],
-      {
-        message:
-          "El método de pago debe ser Efectivo o Transferencia",
-      }
+      [
+        "Efectivo",
+        "Transferencia",
+      ]
     ),
 
     efectivoRecibido: z
       .number()
-      .finite("El efectivo recibido debe ser un número válido")
-      .nonnegative(
-        "El efectivo recibido no puede ser negativo"
-      )
+      .finite()
+      .nonnegative()
       .optional(),
   })
-  .strict()
-  .superRefine((datos, ctx) => {
-    const identificadores = datos.productos.map(
-      (item) => item.productoId
-    );
-
-    const identificadoresUnicos = new Set(identificadores);
-
-    if (identificadoresUnicos.size !== identificadores.length) {
-      ctx.addIssue({
-        code: "custom",
-        path: ["productos"],
-        message:
-          "Un producto no puede aparecer repetido en la venta",
-      });
-    }
-
-    if (
-      datos.metodoPago === "Efectivo" &&
-      datos.efectivoRecibido === undefined
-    ) {
-      ctx.addIssue({
-        code: "custom",
-        path: ["efectivoRecibido"],
-        message:
-          "El efectivo recibido es obligatorio para pagos en efectivo",
-      });
-    }
-  });
 const cancelarVentaSchema = z
   .object({
     motivo: z
