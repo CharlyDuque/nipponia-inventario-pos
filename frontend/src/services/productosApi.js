@@ -1,5 +1,9 @@
 const PRODUCTOS_URL = "/api/productos";
 
+import {
+  crearHeadersOperador,
+} from "./operadorApi";
+
 async function procesarRespuesta(respuesta) {
   let datos;
 
@@ -37,6 +41,7 @@ export async function obtenerProductos({
       method: "GET",
       headers: {
         Accept: "application/json",
+        ...crearHeadersOperador(),
       },
       signal,
     }
@@ -54,6 +59,7 @@ export async function obtenerTodosLosProductos({
       method: "GET",
       headers: {
         Accept: "application/json",
+        ...crearHeadersOperador(),
       },
       signal,
     }
@@ -68,9 +74,11 @@ export async function crearProducto(producto) {
     {
       method: "POST",
       headers: {
-        "Content-Type":
-          "application/json",
-        Accept: "application/json",
+        ...crearHeadersOperador({
+          "Content-Type":
+            "application/json",
+          Accept: "application/json",
+        }),
       },
       body: JSON.stringify(producto),
     }
@@ -88,9 +96,11 @@ export async function actualizarProducto(
     {
       method: "PUT",
       headers: {
-        "Content-Type":
-          "application/json",
-        Accept: "application/json",
+        ...crearHeadersOperador({
+          "Content-Type":
+            "application/json",
+          Accept: "application/json",
+        }),
       },
       body: JSON.stringify(producto),
     }
@@ -105,7 +115,9 @@ export async function darDeBajaProducto(id) {
     {
       method: "DELETE",
       headers: {
-        Accept: "application/json",
+        ...crearHeadersOperador({
+          Accept: "application/json",
+        }),
       },
     }
   );
@@ -119,7 +131,9 @@ export async function reactivarProducto(id) {
     {
       method: "PATCH",
       headers: {
-        Accept: "application/json",
+        ...crearHeadersOperador({
+          Accept: "application/json",
+        }),
       },
     }
   );

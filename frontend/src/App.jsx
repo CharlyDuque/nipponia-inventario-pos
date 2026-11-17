@@ -31,6 +31,9 @@ import ProductosPage from
 import VentasPage from
   "./pages/VentasPage";
 
+import OperadorAccesoPage from
+  "./pages/OperadorAccesoPage";
+
 function App() {
   return (
     <Routes>
@@ -42,6 +45,11 @@ function App() {
             replace
           />
         }
+      />
+
+      <Route
+        path="/operador/acceso"
+        element={<OperadorAccesoPage />}
       />
 
       <Route

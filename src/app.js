@@ -18,6 +18,9 @@ const especificacionSwagger = require(
 
 const app = express();
 
+const operadorRoutes = require(
+  "./routes/operador"
+);
 app.use(cors());
 app.use(express.json());
 
@@ -55,6 +58,10 @@ app.use(
   ventasRoutes
 );
 
+app.use(
+  "/api/operador",
+  operadorRoutes
+);
 module.exports = {
   app,
 };

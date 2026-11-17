@@ -1,14 +1,29 @@
 const express = require("express");
-const router = express.Router();
 
-const productoController = require("../controllers/productoController");
-const validar = require("../middlewares/validar");
-const validarObjectId = require("../middlewares/validarObjectId");
+const productoController = require(
+  "../controllers/productoController"
+);
+
+const validar = require(
+  "../middlewares/validar"
+);
+
+const validarObjectId = require(
+  "../middlewares/validarObjectId"
+);
+
+const requerirOperador = require(
+  "../middlewares/requerirOperador"
+);
+
 const {
   crearProductoSchema,
   actualizarProductoSchema,
-} = require("../validators/productoValidator");
+} = require(
+  "../validators/productoValidator"
+);
 
+const router = express.Router();
 /**
  * @openapi
  * /api/productos:
@@ -53,6 +68,7 @@ router.get(
  */
 router.get(
   "/admin/todos",
+  requerirOperador,
   productoController.obtenerTodosLosProductos
 );
 
@@ -116,6 +132,7 @@ router.get(
  */
 router.post(
   "/",
+  requerirOperador,
   validar(crearProductoSchema),
   productoController.crearProducto
 );
@@ -150,6 +167,7 @@ router.post(
  */
 router.put(
   "/:id",
+  requerirOperador,
   validarObjectId,
   validar(actualizarProductoSchema),
   productoController.actualizarProducto
@@ -178,6 +196,7 @@ router.put(
  */
 router.patch(
   "/:id/reactivar",
+  requerirOperador,
   validarObjectId,
   productoController.reactivarProducto
 );
@@ -206,6 +225,7 @@ router.patch(
  */
 router.delete(
   "/:id",
+  requerirOperador,
   validarObjectId,
   productoController.eliminarProducto
 );

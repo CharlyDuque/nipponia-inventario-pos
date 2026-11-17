@@ -8,6 +8,10 @@ import {
   CartProvider,
 } from "./context/CartContext";
 
+import {
+  OperadorAuthProvider,
+} from "./context/OperadorAuthContext";
+
 import "./styles/tokens.css";
 import "./styles/global.css";
 
@@ -16,9 +20,11 @@ createRoot(
 ).render(
   <StrictMode>
     <BrowserRouter>
-      <CartProvider>
-        <App />
-      </CartProvider>
+      <OperadorAuthProvider>
+        <CartProvider>
+          <App />
+        </CartProvider>
+      </OperadorAuthProvider>
     </BrowserRouter>
   </StrictMode>
 );

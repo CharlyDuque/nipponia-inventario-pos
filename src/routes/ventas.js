@@ -4,18 +4,27 @@ const ventaController = require(
   "../controllers/ventaController"
 );
 
-const validar = require("../middlewares/validar");
+const validar = require(
+  "../middlewares/validar"
+);
 
 const validarObjectId = require(
   "../middlewares/validarObjectId"
 );
 
+const requerirOperador = require(
+  "../middlewares/requerirOperador"
+);
+
 const {
   crearVentaSchema,
   cancelarVentaSchema,
-} = require("../validators/ventaValidator");
+} = require(
+  "../validators/ventaValidator"
+);
 
 const router = express.Router();
+
 
 /**
  * @openapi
@@ -39,6 +48,7 @@ const router = express.Router();
  */
 router.get(
   "/",
+  requerirOperador,
   ventaController.obtenerVentas
 );
 
@@ -69,6 +79,7 @@ router.get(
  */
 router.get(
   "/corte",
+  requerirOperador,
   ventaController.obtenerCorteCaja
 );
 
@@ -100,6 +111,7 @@ router.get(
  */
 router.post(
   "/",
+  requerirOperador,
   validar(crearVentaSchema),
   ventaController.registrarVenta
 );
@@ -140,6 +152,7 @@ router.post(
  */
 router.patch(
   "/:id/cancelar",
+  requerirOperador,
   validarObjectId,
   validar(cancelarVentaSchema),
   ventaController.cancelarVenta

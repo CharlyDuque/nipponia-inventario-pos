@@ -1,27 +1,34 @@
+import {
+  useEffect,
+  useMemo,
+  useState,
+} from "react";
+
 import { Link } from "react-router";
 
 import Button from "../components/Button/Button";
+import Modal from "../components/Modal/Modal";
+import PedidoQr from "../components/cliente/PedidoQr/PedidoQr";
+import Toast from "../components/Toast/Toast";
 
 import {
   useCart,
 } from "../context/CartContext";
 
-import styles from "./CarritoPage.module.css";
-
-import {
-  useEffect,
-  useState,
-} from "react";
-
-import Toast from
-  "../components/Toast/Toast";
-
 import {
   obtenerProductos,
 } from "../services/productosApi";
+
+import {
+  crearPedidoQr,
+} from "../utils/pedidoQr";
+
+import styles from "./CarritoPage.module.css";
+
 function CarritoPage() {
   const {
     items,
+    cantidadTotal,
     subtotal,
     actualizarCantidad,
     eliminarProducto,
@@ -29,150 +36,198 @@ function CarritoPage() {
     sincronizarCarrito,
   } = useCart();
 
+  const [
+    qrAbierto,
+    setQrAbierto,
+  ] = useState(false);
+
   const [toast, setToast] = useState({
     open: false,
     message: "",
     type: "success",
   });
 
+  const pedidoQr = useMemo(
+    () => crearPedidoQr(items),
+    [items]
+  );
+
   useEffect(() => {
-  const controller =
-    new AbortController();
+    const controller =
+      new AbortController();
 
-  let sincronizando = false;
+    let sincronizando = false;
 
-  async function sincronizar({
-    mostrarAvisos = true,
-  } = {}) {
-    if (sincronizando) {
-      return;
+    async function sincronizar() {
+      if (sincronizando) {
+        return;
+      }
+
+      sincronizando = true;
+
+      try {
+        const productosActuales =
+          await obtenerProductos({
+            signal:
+              controller.signal,
+          });
+
+        const cambios =
+          sincronizarCarrito(
+            productosActuales
+          );
+
+        const mensajes = [];
+
+        if (
+          cambios.eliminados.length > 0
+        ) {
+          mensajes.push(
+            `${cambios.eliminados.length} producto(s) dejaron de estar disponibles`
+          );
+        }
+
+        if (
+          cambios.cantidadesAjustadas
+            .length > 0
+        ) {
+          mensajes.push(
+            `${cambios.cantidadesAjustadas.length} cantidad(es) fueron ajustadas al stock actual`
+          );
+        }
+
+        if (
+          cambios.preciosActualizados
+            .length > 0
+        ) {
+          mensajes.push(
+            `${cambios.preciosActualizados.length} precio(s) fueron actualizados`
+          );
+        }
+
+        if (mensajes.length > 0) {
+          setToast({
+            open: true,
+            message: mensajes.join(". "),
+            type: "info",
+          });
+        }
+      } catch (requestError) {
+        if (
+          requestError.name !==
+          "AbortError"
+        ) {
+          setToast({
+            open: true,
+            message:
+              "No fue posible verificar el inventario actual",
+            type: "error",
+          });
+        }
+      } finally {
+        sincronizando = false;
+      }
     }
 
-    sincronizando = true;
+    sincronizar();
 
+    const intervalId =
+      window.setInterval(
+        sincronizar,
+        5000
+      );
+
+    function alRecuperarFoco() {
+      sincronizar();
+    }
+
+    function alCambiarVisibilidad() {
+      if (
+        document.visibilityState ===
+        "visible"
+      ) {
+        sincronizar();
+      }
+    }
+
+    window.addEventListener(
+      "focus",
+      alRecuperarFoco
+    );
+
+    document.addEventListener(
+      "visibilitychange",
+      alCambiarVisibilidad
+    );
+
+    return () => {
+      controller.abort();
+
+      window.clearInterval(
+        intervalId
+      );
+
+      window.removeEventListener(
+        "focus",
+        alRecuperarFoco
+      );
+
+      document.removeEventListener(
+        "visibilitychange",
+        alCambiarVisibilidad
+      );
+    };
+  }, [sincronizarCarrito]);
+
+  async function prepararPedido() {
     try {
       const productosActuales =
-        await obtenerProductos({
-          signal:
-            controller.signal,
-        });
+        await obtenerProductos();
 
       const cambios =
         sincronizarCarrito(
           productosActuales
         );
 
-      if (!mostrarAvisos) {
-        return;
-      }
-
-      const mensajes = [];
-
-      if (
-        cambios.eliminados.length > 0
-      ) {
-        mensajes.push(
-          `${cambios.eliminados.length} producto(s) dejaron de estar disponibles`
-        );
-      }
-
-      if (
+      const huboCambios =
+        cambios.eliminados.length > 0 ||
         cambios.cantidadesAjustadas
-          .length > 0
-      ) {
-        mensajes.push(
-          `${cambios.cantidadesAjustadas.length} cantidad(es) fueron ajustadas al stock actual`
-        );
-      }
-
-      if (
+          .length > 0 ||
         cambios.preciosActualizados
-          .length > 0
-      ) {
-        mensajes.push(
-          `${cambios.preciosActualizados.length} precio(s) fueron actualizados`
-        );
-      }
+          .length > 0;
 
-      if (mensajes.length > 0) {
-        setToast({
-          open: true,
-          message: mensajes.join(". "),
-          type: "info",
-        });
-      }
-    } catch (requestError) {
-      if (
-        requestError.name !==
-        "AbortError"
-      ) {
+      if (huboCambios) {
         setToast({
           open: true,
           message:
-            "No fue posible verificar el inventario actual",
+            "El carrito cambió al verificar el inventario. Revísalo antes de generar el QR.",
+          type: "info",
+        });
+
+        return;
+      }
+
+      if (items.length === 0) {
+        setToast({
+          open: true,
+          message:
+            "El carrito está vacío",
           type: "error",
         });
+
+        return;
       }
-    } finally {
-      sincronizando = false;
+
+      setQrAbierto(true);
+    } catch {
+      setToast({
+        open: true,
+        message:
+          "No fue posible verificar el pedido",
+        type: "error",
+      });
     }
   }
-
-  sincronizar();
-
-  const intervalId =
-    window.setInterval(() => {
-      sincronizar();
-    }, 5000);
-
-  function sincronizarAlRecuperarFoco() {
-    sincronizar();
-  }
-
-  function sincronizarAlMostrarPestaña() {
-    if (
-      document.visibilityState ===
-      "visible"
-    ) {
-      sincronizar();
-    }
-  }
-
-  window.addEventListener(
-    "focus",
-    sincronizarAlRecuperarFoco
-  );
-
-  document.addEventListener(
-    "visibilitychange",
-    sincronizarAlMostrarPestaña
-  );
-
-  return () => {
-    controller.abort();
-
-    window.clearInterval(
-      intervalId
-    );
-
-    window.removeEventListener(
-      "focus",
-      sincronizarAlRecuperarFoco
-    );
-
-    document.removeEventListener(
-      "visibilitychange",
-      sincronizarAlMostrarPestaña
-    );
-  };
-}, [sincronizarCarrito]);
-
-  const cerrarToast = () =>
-    setToast({
-      open: false,
-      message: "",
-      type: "success",
-    });
 
   if (items.length === 0) {
     return (
@@ -182,11 +237,13 @@ function CarritoPage() {
             Cliente
           </p>
 
-          <h1>Tu carrito está vacío</h1>
+          <h1>
+            Tu carrito está vacío
+          </h1>
 
           <p>
-            Agrega productos desde el catálogo
-            para preparar tu pedido.
+            Agrega productos desde el
+            catálogo para preparar tu pedido.
           </p>
 
           <Link
@@ -201,7 +258,13 @@ function CarritoPage() {
           open={toast.open}
           message={toast.message}
           type={toast.type}
-          onClose={cerrarToast}
+          onClose={() =>
+            setToast({
+              open: false,
+              message: "",
+              type: "success",
+            })
+          }
         />
       </main>
     );
@@ -218,8 +281,8 @@ function CarritoPage() {
           <h1>Tu carrito</h1>
 
           <p className={styles.description}>
-            Revisa cantidades antes de presentar
-            el pedido en caja.
+            Revisa las cantidades antes de
+            presentar el pedido en caja.
           </p>
         </div>
 
@@ -246,7 +309,8 @@ function CarritoPage() {
                 <h2>{item.nombre}</h2>
 
                 <p className={styles.price}>
-                  ${Number(
+                  $
+                  {Number(
                     item.precio
                   ).toFixed(2)}
                   {" "}
@@ -282,7 +346,7 @@ function CarritoPage() {
                 >
                   $
                   {(
-                    item.precio *
+                    Number(item.precio) *
                     item.cantidad
                   ).toFixed(2)}
                 </strong>
@@ -307,6 +371,14 @@ function CarritoPage() {
           <p>Resumen del pedido</p>
 
           <div className={styles.totalRow}>
+            <span>Unidades</span>
+
+            <strong>
+              {cantidadTotal}
+            </strong>
+          </div>
+
+          <div className={styles.totalRow}>
             <span>Subtotal</span>
 
             <strong className="tabular">
@@ -315,30 +387,54 @@ function CarritoPage() {
           </div>
 
           <p className={styles.notice}>
-            El stock se confirmará nuevamente
-            al realizar el cobro.
+            El stock y los precios se
+            confirmarán nuevamente al
+            realizar el cobro.
           </p>
 
           <Button
             variant="primary"
             size="large"
             fullWidth
-            onClick={() =>
-              window.alert(
-                "El siguiente paso será generar el QR del pedido"
-              )
-            }
+            onClick={prepararPedido}
           >
             Preparar pedido
           </Button>
         </aside>
       </section>
 
+      <Modal
+        open={qrAbierto}
+        title="Pedido Nipponia"
+        onClose={() =>
+          setQrAbierto(false)
+        }
+      >
+        <PedidoQr
+          contenido={
+            pedidoQr.contenido
+          }
+          cantidadTotal={
+            cantidadTotal
+          }
+          subtotal={subtotal}
+          onClose={() =>
+            setQrAbierto(false)
+          }
+        />
+      </Modal>
+
       <Toast
         open={toast.open}
         message={toast.message}
         type={toast.type}
-        onClose={cerrarToast}
+        onClose={() =>
+          setToast({
+            open: false,
+            message: "",
+            type: "success",
+          })
+        }
       />
     </main>
   );
