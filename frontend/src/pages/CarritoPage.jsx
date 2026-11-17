@@ -68,7 +68,13 @@ function CarritoPage() {
     message: "",
     type: "success",
   });
-
+  const duracionToast =
+    toast.type === "success" &&
+      toast.message.includes(
+        "Compra confirmada"
+      )
+      ? 60000
+      : 3000;
   const pedidoQr = useMemo(
     () =>
       pedidoActivo
@@ -214,113 +220,113 @@ function CarritoPage() {
     const controller =
       new AbortController();
 
-      let consultando = false;
+    let consultando = false;
 
-      async function consultarEstado() {
-        if (consultando) {
-          return;
-        }
-
-        consultando = true;
-
-        try {
-          const estado =
-            await obtenerEstadoPedido(
-              pedidoActivo._id,
-              {
-                signal:
-                  controller.signal,
-              }
-            );
-
-          if (
-            estado.estado ===
-            "Completado"
-          ) {
-            vaciarCarrito();
-
-            eliminarPedidoActivo();
-
-            setPedidoActivo(null);
-            setQrAbierto(false);
-
-            setToast({
-              open: true,
-
-              message:
-                "Compra confirmada. El carrito fue vaciado correctamente.",
-
-              type: "success",
-            });
-          }
-
-          if (
-            estado.estado ===
-            "Expirado"
-          ) {
-            eliminarPedidoActivo();
-
-            setPedidoActivo(null);
-            setQrAbierto(false);
-
-            setToast({
-              open: true,
-
-              message:
-                "El QR expiró. Tu carrito se conserva y puedes generar uno nuevo.",
-
-              type: "info",
-            });
-          }
-
-          if (
-            estado.estado ===
-            "Cancelado"
-          ) {
-            eliminarPedidoActivo();
-
-            setPedidoActivo(null);
-            setQrAbierto(false);
-
-            setToast({
-              open: true,
-
-              message:
-                "El pedido fue cancelado. Tu carrito se conserva.",
-
-              type: "info",
-            });
-          }
-        } catch (error) {
-          if (
-            error.name !==
-            "AbortError"
-          ) {
-            console.error(
-              "No fue posible consultar el pedido:",
-              error
-            );
-          }
-        } finally {
-          consultando = false;
-        }
+    async function consultarEstado() {
+      if (consultando) {
+        return;
       }
 
-      consultarEstado();
+      consultando = true;
 
-      const intervalId =
-        window.setInterval(
-          consultarEstado,
-          5000
-        );
+      try {
+        const estado =
+          await obtenerEstadoPedido(
+            pedidoActivo._id,
+            {
+              signal:
+                controller.signal,
+            }
+          );
 
-      return () => {
-        controller.abort();
+        if (
+          estado.estado ===
+          "Completado"
+        ) {
+          vaciarCarrito();
 
-        window.clearInterval(
-          intervalId
-        );
-      };
+          eliminarPedidoActivo();
+
+          setPedidoActivo(null);
+          setQrAbierto(false);
+
+          setToast({
+            open: true,
+
+            message:
+              "Compra confirmada. El carrito fue vaciado correctamente.",
+
+            type: "success",
+          });
+        }
+
+        if (
+          estado.estado ===
+          "Expirado"
+        ) {
+          eliminarPedidoActivo();
+
+          setPedidoActivo(null);
+          setQrAbierto(false);
+
+          setToast({
+            open: true,
+
+            message:
+              "El QR expiró. Tu carrito se conserva y puedes generar uno nuevo.",
+
+            type: "info",
+          });
+        }
+
+        if (
+          estado.estado ===
+          "Cancelado"
+        ) {
+          eliminarPedidoActivo();
+
+          setPedidoActivo(null);
+          setQrAbierto(false);
+
+          setToast({
+            open: true,
+
+            message:
+              "El pedido fue cancelado. Tu carrito se conserva.",
+
+            type: "info",
+          });
+        }
+      } catch (error) {
+        if (
+          error.name !==
+          "AbortError"
+        ) {
+          console.error(
+            "No fue posible consultar el pedido:",
+            error
+          );
+        }
+      } finally {
+        consultando = false;
+      }
+    }
+
+    consultarEstado();
+
+    const intervalId =
+      window.setInterval(
+        consultarEstado,
+        5000
+      );
+
+    return () => {
+      controller.abort();
+
+      window.clearInterval(
+        intervalId
+      );
+    };
   }, [
     pedidoActivo,
     vaciarCarrito,
@@ -437,6 +443,7 @@ function CarritoPage() {
         </section>
 
         <Toast
+          duration={duracionToast}
           open={toast.open}
           message={toast.message}
           type={toast.type}
@@ -611,6 +618,7 @@ function CarritoPage() {
       </Modal>
 
       <Toast
+        duration={duracionToast}
         open={toast.open}
         message={toast.message}
         type={toast.type}
