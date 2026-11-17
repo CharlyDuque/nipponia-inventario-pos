@@ -2,19 +2,29 @@ const Pedido = require(
   "../models/Pedido"
 );
 
-const DURACION_PEDIDO_MINUTOS = 30;
+const expiracionConfigurada = Number(
+  process.env.PEDIDO_EXPIRACION_MINUTOS
+);
+
+const DURACION_PEDIDO_MINUTOS =
+  Number.isFinite(expiracionConfigurada)
+    ? expiracionConfigurada
+    : 180;
 
 exports.crearPedido = async (
   req,
   res
 ) => {
   try {
-    const expiraEn = new Date(
-      Date.now() +
-        DURACION_PEDIDO_MINUTOS *
-          60 *
-          1000
-    );
+    const expiraEn =
+      DURACION_PEDIDO_MINUTOS > 0
+        ? new Date(
+            Date.now() +
+              DURACION_PEDIDO_MINUTOS *
+                60 *
+                1000
+          )
+        : null;
 
     const pedido =
       await Pedido.create({
@@ -72,9 +82,10 @@ exports.obtenerEstadoPedido = async (
     }
 
     if (
-      pedido.estado === "Pendiente" &&
-      pedido.expiraEn <= new Date()
-    ) {
+  pedido.estado === "Pendiente" &&
+  pedido.expiraEn &&
+  pedido.expiraEn <= new Date()
+) {
       pedido.estado = "Expirado";
 
       await pedido.save();
@@ -114,6 +125,7 @@ exports.obtenerPedidoOperador = async (
 
     if (
       pedido.estado === "Pendiente" &&
+      pedido.expiraEn &&
       pedido.expiraEn <= new Date()
     ) {
       pedido.estado = "Expirado";

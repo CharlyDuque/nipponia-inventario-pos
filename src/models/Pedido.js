@@ -53,7 +53,7 @@ const pedidoSchema =
 
       expiraEn: {
         type: Date,
-        required: true,
+        default: null,
         index: true,
       },
 
