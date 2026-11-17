@@ -22,9 +22,17 @@ const operadorRoutes = require(
   "./routes/operador"
 );
 
+const pedidosRoutes = require(
+  "./routes/pedidos"
+);
 
 app.use(cors());
 app.use(express.json());
+
+app.use(
+  "/api/pedidos",
+  pedidosRoutes
+);
 
 app.use(
   "/api-docs",
