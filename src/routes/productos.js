@@ -54,17 +54,16 @@ router.get(
  *   get:
  *     tags:
  *       - Productos
- *     summary: Obtener productos activos e inactivos
- *     description: Ruta de auditoría. No está protegida por autenticación en el MVP.
+ *     summary: Obtener todos los productos para administración
+ *     security:
+ *       - OperadorPin: []
  *     responses:
  *       200:
- *         description: Historial completo de productos
- *         content:
- *           application/json:
- *             schema:
- *               type: array
- *               items:
- *                 $ref: '#/components/schemas/Producto'
+ *         description: Lista de productos activos e inactivos
+ *       401:
+ *         description: PIN de operador ausente o incorrecto
+ *       500:
+ *         description: Error interno
  */
 router.get(
   "/admin/todos",
@@ -108,6 +107,8 @@ router.get(
  *     tags:
  *       - Productos
  *     summary: Crear un producto
+ *     security:
+ *       - OperadorPin: []
  *     requestBody:
  *       required: true
  *       content:
@@ -116,19 +117,15 @@ router.get(
  *             $ref: '#/components/schemas/CrearProducto'
  *     responses:
  *       201:
- *         description: Producto creado
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/Producto'
+ *         description: Producto creado correctamente
  *       400:
  *         description: Datos inválidos
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/Error'
+ *       401:
+ *         description: PIN de operador ausente o incorrecto
  *       409:
- *         description: Código duplicado
+ *         description: El código ya está registrado
+ *       500:
+ *         description: Error interno
  */
 router.post(
   "/",
@@ -143,14 +140,16 @@ router.post(
  *   put:
  *     tags:
  *       - Productos
- *     summary: Actualizar parcialmente un producto
+ *     summary: Actualizar un producto
+ *     security:
+ *       - OperadorPin: []
  *     parameters:
  *       - in: path
  *         name: id
  *         required: true
  *         schema:
  *           type: string
- *         example: 6af93c20b70e915a93752cc8
+ *         description: Identificador de MongoDB del producto
  *     requestBody:
  *       required: true
  *       content:
@@ -159,11 +158,17 @@ router.post(
  *             $ref: '#/components/schemas/ActualizarProducto'
  *     responses:
  *       200:
- *         description: Producto actualizado
+ *         description: Producto actualizado correctamente
  *       400:
  *         description: Datos o identificador inválidos
+ *       401:
+ *         description: PIN de operador ausente o incorrecto
  *       404:
  *         description: Producto no encontrado
+ *       409:
+ *         description: El código ya pertenece a otro producto
+ *       500:
+ *         description: Error interno
  */
 router.put(
   "/:id",
@@ -179,20 +184,29 @@ router.put(
  *   patch:
  *     tags:
  *       - Productos
- *     summary: Reactivar un producto dado de baja
+ *     summary: Reactivar un producto
+ *     security:
+ *       - OperadorPin: []
  *     parameters:
  *       - in: path
  *         name: id
  *         required: true
  *         schema:
  *           type: string
+ *         description: Identificador de MongoDB del producto
  *     responses:
  *       200:
- *         description: Producto reactivado
+ *         description: Producto reactivado correctamente
  *       400:
  *         description: Identificador inválido
+ *       401:
+ *         description: PIN de operador ausente o incorrecto
  *       404:
  *         description: Producto no encontrado
+ *       409:
+ *         description: El producto ya estaba activo
+ *       500:
+ *         description: Error interno
  */
 router.patch(
   "/:id/reactivar",
@@ -208,20 +222,29 @@ router.patch(
  *     tags:
  *       - Productos
  *     summary: Dar de baja un producto
- *     description: Realiza una baja lógica sin eliminar el documento de MongoDB.
+ *     description: Realiza una baja lógica y conserva el historial del producto.
+ *     security:
+ *       - OperadorPin: []
  *     parameters:
  *       - in: path
  *         name: id
  *         required: true
  *         schema:
  *           type: string
+ *         description: Identificador de MongoDB del producto
  *     responses:
  *       200:
- *         description: Producto dado de baja
+ *         description: Producto dado de baja correctamente
  *       400:
  *         description: Identificador inválido
+ *       401:
+ *         description: PIN de operador ausente o incorrecto
  *       404:
  *         description: Producto no encontrado
+ *       409:
+ *         description: El producto ya estaba inactivo
+ *       500:
+ *         description: Error interno
  */
 router.delete(
   "/:id",

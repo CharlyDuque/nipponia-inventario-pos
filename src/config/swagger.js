@@ -35,8 +35,111 @@ const opcionesSwagger = {
       },
     ],
 
-    components: {
+    omponents: {
+      securitySchemes: {
+        OperadorPin: {
+          type: "apiKey",
+          in: "header",
+          name: "x-operador-pin",
+
+          description:
+            "PIN local requerido para operaciones administrativas",
+        },
+      },
+
       schemas: {
+        ItemPedido: {
+          type: "object",
+
+          required: [
+            "productoId",
+            "cantidad",
+          ],
+
+          properties: {
+            productoId: {
+              type: "string",
+              example:
+                "6afa65c4c9fb3a258f862fd8",
+            },
+
+            cantidad: {
+              type: "integer",
+              minimum: 1,
+              example: 2,
+            },
+          },
+        },
+
+        CrearPedido: {
+          type: "object",
+
+          required: ["productos"],
+
+          properties: {
+            productos: {
+              type: "array",
+              minItems: 1,
+
+              items: {
+                $ref:
+                  "#/components/schemas/ItemPedido",
+              },
+            },
+          },
+        },
+
+        Pedido: {
+          type: "object",
+
+          properties: {
+            _id: {
+              type: "string",
+            },
+
+            estado: {
+              type: "string",
+
+              enum: [
+                "Pendiente",
+                "Completado",
+                "Cancelado",
+                "Expirado",
+              ],
+            },
+
+            productos: {
+              type: "array",
+
+              items: {
+                $ref:
+                  "#/components/schemas/ItemPedido",
+              },
+            },
+
+            expiraEn: {
+              type: "string",
+              format: "date-time",
+              nullable: true,
+            },
+
+            ventaId: {
+              type: "string",
+              nullable: true,
+            },
+
+            completadoEn: {
+              type: "string",
+              format: "date-time",
+              nullable: true,
+            },
+
+            createdAt: {
+              type: "string",
+              format: "date-time",
+            },
+          },
+        },
         Producto: {
           type: "object",
 
@@ -239,6 +342,15 @@ const opcionesSwagger = {
         },
 
         CrearVenta: {
+          pedidoId: {
+            type: "string",
+
+            description:
+              "Pedido persistente asociado al QR",
+
+            example:
+              "6afcd2dd293e389580c55e21",
+          },
           type: "object",
 
           required: [
