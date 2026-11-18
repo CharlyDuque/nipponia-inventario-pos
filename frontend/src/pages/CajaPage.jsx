@@ -41,7 +41,6 @@ import {
   registrarVenta,
 } from "../services/ventasApi";
 
-import QrScanner from "../components/caja/QrScanner/QrScanner";
 
 function CajaPage() {
   const [contenidoQr, setContenidoQr] =
@@ -154,18 +153,7 @@ function CajaPage() {
     setPedidoId("");
   }
 
-  async function manejarQrEscaneado(
-    contenido
-  ) {
-    setContenidoQr(contenido);
 
-    setToast({
-      open: true,
-      message:
-        "Código QR leído correctamente",
-      type: "success",
-    });
-  }
 
   async function cargarPedido() {
     setCargando(true);
@@ -432,9 +420,7 @@ function CajaPage() {
                 Contenido del código QR
               </span>
 
-              <QrScanner
-                onScan={manejarQrEscaneado}
-              />
+              
 
               <textarea
                 id="contenido-qr"
