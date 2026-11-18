@@ -11,6 +11,7 @@ import Modal from "../components/Modal/Modal";
 import Toast from "../components/Toast/Toast";
 import ProductoCard from "../components/productos/ProductoCard";
 import ProductoForm from "../components/productos/ProductoForm";
+import AccesoCatalogoQr from "../components/operador/AccesoCatalogoQr/AccesoCatalogoQr";
 
 import {
   actualizarProducto,
@@ -281,6 +282,10 @@ function ProductosPage() {
           Nuevo producto
         </Button>
       </header>
+
+      <div className={styles.catalogoQr}>
+        <AccesoCatalogoQr />
+      </div>
 
       <section
         className={styles.filters}

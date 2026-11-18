@@ -33,6 +33,17 @@
   color: var(--color-text-muted);
 }
 
+.catalogoQr {
+  display: flex;
+  justify-content: flex-end;
+
+  margin-bottom: var(--space-6);
+}
+
+.catalogoQr > section {
+  width: min(480px, 100%);
+}
+
 .counter {
   margin-bottom: var(--space-4);
 }
