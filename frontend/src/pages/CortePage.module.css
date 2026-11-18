@@ -1,0 +1,479 @@
+.page {
+  width: min(1220px, 100% - 2rem);
+  margin-inline: auto;
+  padding-block: var(--space-xl);
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-lg);
+
+  margin-bottom: var(--space-lg);
+}
+
+.headerActions {
+  display: flex;
+  gap: var(--space-sm);
+}
+
+.eyebrow {
+  margin-bottom: var(--space-xs);
+
+  color: var(--color-primary);
+
+  font-size: var(--font-caption);
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.description {
+  color: var(--color-text-muted);
+}
+
+.datePanel {
+  display: flex;
+  min-height: 72px;
+  align-items: center;
+  gap: var(--space-md);
+
+  margin-bottom: var(--space-lg);
+  padding: var(--space-md);
+
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+
+  background: var(--color-bg-surface);
+}
+
+.datePanel label {
+  font-weight: 800;
+}
+
+.datePanel input {
+  min-height: 44px;
+
+  padding-inline: var(--space-md);
+
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+
+  background: var(--color-bg-canvas);
+  color: var(--color-text-primary);
+
+  color-scheme: dark;
+}
+
+.datePanel input:focus {
+  border-color: var(--color-primary);
+  outline: none;
+
+  box-shadow:
+    0 0 0 3px
+    color-mix(
+      in srgb,
+      var(--color-primary) 18%,
+      transparent
+    );
+}
+
+.datePanel span {
+  margin-left: auto;
+
+  color: var(--color-text-muted);
+  font-size: var(--font-caption);
+}
+
+.metrics {
+  display: grid;
+  grid-template-columns:
+    repeat(4, minmax(0, 1fr));
+  gap: var(--space-md);
+
+  margin-bottom: var(--space-lg);
+}
+
+.metric {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: var(--space-md);
+
+  padding: var(--space-lg);
+
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+
+  background: var(--color-bg-surface);
+  box-shadow: var(--shadow-card);
+}
+
+.metricIcon {
+  display: grid;
+  width: 48px;
+  height: 48px;
+  flex: 0 0 auto;
+  place-items: center;
+
+  border-radius: var(--radius-md);
+}
+
+.gold {
+  background:
+    color-mix(
+      in srgb,
+      var(--color-primary) 14%,
+      transparent
+    );
+
+  color: var(--color-primary);
+}
+
+.green {
+  background:
+    color-mix(
+      in srgb,
+      var(--color-status-success) 14%,
+      transparent
+    );
+
+  color: var(--color-status-success);
+}
+
+.blue {
+  background:
+    color-mix(
+      in srgb,
+      var(--color-secondary) 14%,
+      transparent
+    );
+
+  color: var(--color-secondary);
+}
+
+.purple {
+  background:
+    color-mix(
+      in srgb,
+      #a855f7 14%,
+      transparent
+    );
+
+  color: #c084fc;
+}
+
+.metric div {
+  display: grid;
+  min-width: 0;
+  gap: var(--space-xs);
+}
+
+.metric span,
+.metric small {
+  color: var(--color-text-muted);
+}
+
+.metric strong {
+  overflow: hidden;
+
+  font-size: var(--font-h2);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.metric small {
+  font-size: var(--font-caption);
+}
+
+.breakdown {
+  display: grid;
+  gap: var(--space-md);
+
+  margin-bottom: var(--space-lg);
+  padding: var(--space-lg);
+
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+
+  background: var(--color-bg-surface);
+}
+
+.breakdownHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-lg);
+}
+
+.breakdownHeader h2,
+.breakdownHeader p {
+  margin-bottom: 0;
+}
+
+.breakdownHeader p {
+  color: var(--color-text-muted);
+}
+
+.breakdownHeader > strong {
+  color: var(--color-primary);
+  font-size: var(--font-h1);
+}
+
+.progress {
+  display: flex;
+  width: 100%;
+  height: 14px;
+  overflow: hidden;
+
+  border-radius: var(--radius-full);
+
+  background: var(--color-bg-hover);
+}
+
+.cashProgress {
+  height: 100%;
+  background: var(--color-status-success);
+}
+
+.transferProgress {
+  height: 100%;
+  background: var(--color-secondary);
+}
+
+.legend {
+  display: flex;
+  gap: var(--space-lg);
+
+  color: var(--color-text-muted);
+  font-size: var(--font-caption);
+  font-weight: 800;
+}
+
+.legend span {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-xs);
+}
+
+.legend i {
+  width: 10px;
+  height: 10px;
+
+  border-radius: 50%;
+}
+
+.cashDot {
+  background: var(--color-status-success);
+}
+
+.transferDot {
+  background: var(--color-secondary);
+}
+
+.salesSection {
+  overflow: hidden;
+
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+
+  background: var(--color-bg-surface);
+}
+
+.salesHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  padding: var(--space-lg);
+
+  border-bottom: 1px solid var(--color-border);
+}
+
+.salesHeader h2,
+.salesHeader p {
+  margin-bottom: 0;
+}
+
+.salesHeader p {
+  color: var(--color-text-muted);
+}
+
+.sales {
+  display: grid;
+}
+
+.sale {
+  display: grid;
+  grid-template-columns:
+    110px
+    minmax(0, 1fr)
+    150px
+    130px;
+  align-items: center;
+  gap: var(--space-md);
+
+  padding: var(--space-md)
+    var(--space-lg);
+
+  border-bottom: 1px solid var(--color-border);
+}
+
+.sale:last-child {
+  border-bottom: 0;
+}
+
+.sale:hover {
+  background:
+    color-mix(
+      in srgb,
+      var(--color-bg-hover) 45%,
+      transparent
+    );
+}
+
+.saleTime {
+  display: grid;
+  gap: var(--space-xs);
+}
+
+.saleTime span {
+  font-weight: 900;
+}
+
+.saleTime small,
+.saleInfo span {
+  color: var(--color-text-muted);
+  font-size: var(--font-caption);
+}
+
+.saleInfo {
+  display: grid;
+  min-width: 0;
+  gap: var(--space-xs);
+}
+
+.saleInfo span {
+  overflow: hidden;
+
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.salePayment {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-xs);
+
+  color: var(--color-text-muted);
+  font-weight: 800;
+}
+
+.saleAmount {
+  justify-self: end;
+
+  color: var(--color-primary);
+  font-size: var(--font-h2);
+}
+
+.empty {
+  display: grid;
+  min-height: 280px;
+  place-content: center;
+  justify-items: center;
+  gap: var(--space-sm);
+
+  padding: var(--space-xl);
+
+  color: var(--color-text-muted);
+  text-align: center;
+}
+
+.empty h3,
+.empty p {
+  margin: 0;
+}
+
+.message {
+  padding: var(--space-xl);
+
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+
+  background: var(--color-bg-surface);
+  text-align: center;
+}
+
+.error {
+  color: var(--color-status-danger);
+}
+
+@media (max-width: 1050px) {
+  .metrics {
+    grid-template-columns:
+      repeat(2, minmax(0, 1fr));
+  }
+
+  .sale {
+    grid-template-columns:
+      100px
+      minmax(0, 1fr)
+      120px;
+  }
+
+  .salePayment {
+    display: none;
+  }
+}
+
+@media (max-width: 680px) {
+  .page {
+    width: min(100% - 1rem, 1220px);
+    padding-block: var(--space-md);
+  }
+
+  .header,
+  .breakdownHeader {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .headerActions {
+    display: grid;
+    grid-template-columns:
+      repeat(2, minmax(0, 1fr));
+  }
+
+  .datePanel {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .datePanel span {
+    margin-left: 0;
+  }
+
+  .metrics {
+    grid-template-columns: 1fr;
+  }
+
+  .sale {
+    grid-template-columns:
+      minmax(0, 1fr)
+      auto;
+  }
+
+  .saleTime {
+    display: none;
+  }
+
+  .saleAmount {
+    align-self: center;
+  }
+
+  .legend {
+    flex-direction: column;
+    gap: var(--space-sm);
+  }
+}
